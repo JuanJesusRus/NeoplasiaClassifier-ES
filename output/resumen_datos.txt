@@ -1,0 +1,11 @@
+📊 Conteo por clase (0 = una neoplasia, 1 = múltiples neoplasias):
+MULTIPLES
+0    983
+1    967
+Name: count, dtype: int64
+
+📈 Rango de palabras por clase:
+           min   max    mean    std
+MULTIPLES                          
+0            9   683  111.55  83.27
+1            5  1444  139.95  95.30
