@@ -1,0 +1,1 @@
+Época	Train Loss	Val Accuracy	Val F1
