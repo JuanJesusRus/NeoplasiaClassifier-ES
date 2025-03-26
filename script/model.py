@@ -15,17 +15,17 @@ from tqdm import tqdm
 # ──────────────────────────────────────────────────────────────
 # CONFIGURACIÓN INICIAL
 # ──────────────────────────────────────────────────────────────
-device = torch_directml.device()
-print(f"✅ Usando dispositivo DirectML: {device}")
+device = torch.device("cpu")
 
 output_dir = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output"
 os.makedirs(output_dir, exist_ok=True)
 
 ruta_csv = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/Multiples_neoplasias_solo_resumenes_selection/textos_cortos_filtrados.csv"
 modelo_path = "PlanTL-GOB-ES/roberta-base-biomedical-clinical-es"
-batch_size = 8
-epochs = 5
+batch_size = 16
+epochs = 15
 max_len = 512
+early_stopping_patience = 5
 
 # ──────────────────────────────────────────────────────────────
 # CARGAR DATOS Y DIVIDIR EN TRAIN / VAL / TEST
@@ -85,8 +85,11 @@ optimizer = optim.AdamW(model.parameters(), lr=2e-5)
 criterion = nn.CrossEntropyLoss()
 
 # Archivo para guardar métricas por época
-with open(f"{output_dir}/metricas_epocas.txt", "w") as f:
+with open(f"{output_dir}/metricas.txt", "w") as f:
     f.write("Época\tTrain Loss\tVal Accuracy\tVal F1\n")
+
+best_val_loss = float("inf")
+epochs_without_improvement = 0
 
 for epoch in range(epochs):
     model.train()
@@ -106,6 +109,7 @@ for epoch in range(epochs):
     avg_train_loss = total_loss / len(train_loader)
 
     # Validación
+    val_loss = 0.0  
     model.eval()
     val_preds, val_labels = [], []
     with torch.no_grad():
@@ -113,18 +117,36 @@ for epoch in range(epochs):
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["label"].to(device)
-            outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+            outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+
             logits = outputs.logits
             pred_labels = torch.argmax(logits, dim=1)
             val_preds.extend(pred_labels.cpu().numpy())
             val_labels.extend(labels.cpu().numpy())
+            loss = outputs.loss  
+            val_loss += loss.item()  
+
 
     val_acc = accuracy_score(val_labels, val_preds)
     val_f1 = f1_score(val_labels, val_preds)
+    val_loss /= len(val_loader)  # ← Añade esta línea antes de comparar con best_val_loss
+
 
     # Guardar métricas de la época
-    with open(f"{output_dir}/metricas_epocas.txt", "a") as f:
+    with open(f"{output_dir}/metricas.txt", "a") as f:
         f.write(f"{epoch+1}\t{avg_train_loss:.4f}\t{val_acc:.4f}\t{val_f1:.4f}\n")
+
+    if val_loss < best_val_loss:
+        best_val_loss = val_loss
+        epochs_without_improvement = 0
+        model.save_pretrained(f"{output_dir}/roberta2")
+        tokenizer.save_pretrained(f"{output_dir}/roberta2")
+    else:
+        epochs_without_improvement += 1
+        if epochs_without_improvement >= early_stopping_patience:
+            print(f"⏹️ Early stopping en época {epoch+1}")
+            break
+
 
 # ──────────────────────────────────────────────────────────────
 # EVALUACIÓN FINAL EN TEST
@@ -147,33 +169,44 @@ acc = accuracy_score(test_labels, test_preds)
 prec = precision_score(test_labels, test_preds)
 rec = recall_score(test_labels, test_preds)
 f1 = f1_score(test_labels, test_preds)
+cm = confusion_matrix(test_labels, test_preds)
 
-with open(f"{output_dir}/metricas_test.txt", "w") as f:
+
+with open(f"{output_dir}/metricas.txt", "w") as f:
     f.write(f"Accuracy: {acc:.4f}\n")
     f.write(f"Precision: {prec:.4f}\n")
     f.write(f"Recall: {rec:.4f}\n")
     f.write(f"F1-score: {f1:.4f}\n")
+    f.write("\nMatriz de Confusión - TEST FINAL:\n")
+    f.write(str(cm) + "\n")
 
-# Reporte de clasificación completo
-reporte = classification_report(test_labels, test_preds, digits=4)
-with open(f"{output_dir}/reporte_clasificacion.txt", "w") as f:
-    f.write(reporte)
-
-# Matriz de confusión
-cm = confusion_matrix(test_labels, test_preds)
-plt.figure()
-plt.matshow(cm, cmap=plt.cm.Blues)
-plt.title("Matriz de Confusión")
-plt.xlabel("Predicción")
-plt.ylabel("Real")
+plt.figure(figsize=(5, 5))
+plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+plt.title("Matriz de Confusión - TEST")
 plt.colorbar()
-plt.savefig(f"{output_dir}/matriz_confusion.png")
+tick_marks = np.arange(2)
+plt.xticks(tick_marks, ["Una neoplasia", "Múltiples"], rotation=45)
+plt.yticks(tick_marks, ["Una neoplasia", "Múltiples"])
+
+# Plotear Confussion Matrix
+# Añadir los números dentro de cada celda
+thresh = cm.max() / 2
+for i in range(cm.shape[0]):
+    for j in range(cm.shape[1]):
+        plt.text(j, i, format(cm[i, j], "d"),
+                 ha="center", va="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+plt.ylabel("Real")
+plt.xlabel("Predicción")
+plt.tight_layout()
+plt.savefig(f"{output_dir}/img/matriz_confusion.png")
 plt.close()
 
 # ──────────────────────────────────────────────────────────────
 # GUARDAR MODELO
 # ──────────────────────────────────────────────────────────────
-model.save_pretrained(f"{output_dir}/roberta_directml")
-tokenizer.save_pretrained(f"{output_dir}/roberta_directml")
-print(f"✅ Modelo guardado en: {output_dir}/roberta_directml")
+model.save_pretrained(f"{output_dir}/roberta2")
+tokenizer.save_pretrained(f"{output_dir}/roberta2")
+print(f"✅ Modelo guardado en: {output_dir}/roberta2")
 
