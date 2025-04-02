@@ -2,7 +2,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 # Cargar modelo y tokenizer entrenados
-modelo_path = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/roberta"
+modelo_path = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/roberta2"
 tokenizer = AutoTokenizer.from_pretrained(modelo_path)
 model = AutoModelForSequenceClassification.from_pretrained(modelo_path)
 model.eval()
