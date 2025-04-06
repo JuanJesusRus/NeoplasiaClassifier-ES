@@ -23,7 +23,7 @@ ruta_csv = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/Multiple
 modelo_path = "PlanTL-GOB-ES/roberta-base-biomedical-clinical-es"
 max_len = 512
 batch_size = 16
-max_epochs = 10
+max_epochs = 20
 early_stopping_patience = 3
 
 # ──────────────────────────────────────────────────────────────
