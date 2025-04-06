@@ -237,7 +237,7 @@ def evaluar_en_test(model_path, test_df, output_dir, max_len=512, batch_size=16)
 
 
 # Rutas
-output_dir = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/roberta3"
+output_dir = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/validación_cruzada"
 os.makedirs(output_dir, exist_ok=True)
 ruta_csv = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/Multiples_neoplasias_solo_resumenes_selection/textos_cortos_filtrados.csv"
 
