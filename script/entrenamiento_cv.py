@@ -242,11 +242,11 @@ os.makedirs(output_dir, exist_ok=True)
 ruta_csv = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/Multiples_neoplasias_solo_resumenes_selection/textos_cortos_filtrados.csv"
 
 # Parámetros
-PATIENCE = 10
+PATIENCE = 3
 MIN_DELTA = 0.001
 modelo_path = "PlanTL-GOB-ES/roberta-base-biomedical-clinical-es"
 batch_size = 16
-epochs = 15
+epochs = 10
 max_len = 512
 n_splits = 5
 learning_rate=2e-5
