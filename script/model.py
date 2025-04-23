@@ -17,7 +17,7 @@ from tqdm import tqdm
 # ──────────────────────────────────────────────────────────────
 device = torch.device("cpu")
 
-output_dir = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/roberta3"
+output_dir = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/roberta/roberta3"
 os.makedirs(output_dir, exist_ok=True)
 
 ruta_csv = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/Multiples_neoplasias_solo_resumenes_selection/textos_cortos_filtrados.csv"

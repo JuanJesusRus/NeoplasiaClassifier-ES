@@ -237,7 +237,7 @@ def evaluar_en_test(model_path, test_df, output_dir, max_len=512, batch_size=16)
 
 
 # Rutas
-output_dir = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/validación_cruzada"
+output_dir = "../output/roberta/validación_cruzada/cv2"
 os.makedirs(output_dir, exist_ok=True)
 ruta_csv = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/Multiples_neoplasias_solo_resumenes_selection/textos_cortos_filtrados.csv"
 
@@ -249,7 +249,7 @@ batch_size = 16
 epochs = 10
 max_len = 512
 n_splits = 5
-learning_rate=2e-5
+learning_rate=1e-5
 weight_decay=0.01
 
 
