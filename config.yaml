@@ -1,0 +1,25 @@
+# ===================== config.yaml =====================
+entrenamiento:
+  usar_validacion_cruzada: false   # true → CV | false → simple
+  num_folds: 5
+  batch_size: 16
+  num_epochs: 10
+  learning_rate: 1e-5
+  weight_decay: 0.01
+  patience: 3
+  min_delta: 0.001
+
+modelo:
+  tipo: "roberta"
+  path: 'PlanTL-GOB-ES/roberta-base-biomedical-clinical-es'
+  max_len: 512
+
+datos:
+  ruta_csv: 'C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\Multiples_neoplasias_solo_resumenes_selection\textos_cortos_filtrados.csv'
+  columna_texto: "TEXTO"
+  columna_etiqueta: "MULTIPLES"
+  test_size: 0.2
+  random_state: 42
+
+salida:
+  carpeta_resultados: 'C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\roberta\roberta2_1'
