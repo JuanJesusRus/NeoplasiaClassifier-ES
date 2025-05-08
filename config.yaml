@@ -3,15 +3,15 @@ entrenamiento:
   usar_validacion_cruzada: false   # true → CV | false → simple
   num_folds: 5
   batch_size: 16
-  num_epochs: 10
+  num_epochs: 15
   learning_rate: 1e-5
   weight_decay: 0.01
-  patience: 3
+  patience: 5
   min_delta: 0.001
 
 modelo:
-  tipo: "roberta"
-  path: 'PlanTL-GOB-ES/roberta-base-biomedical-clinical-es'
+  tipo: "robertaxlm"
+  path: 'FacebookAI/xlm-roberta-base'
   max_len: 512
 
 datos:
@@ -22,4 +22,4 @@ datos:
   random_state: 42
 
 salida:
-  carpeta_resultados: 'C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\roberta\roberta2_1'
+  carpeta_resultados: 'C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\xlm_roberta\xlm_roberta1'
