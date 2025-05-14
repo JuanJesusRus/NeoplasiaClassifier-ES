@@ -4,14 +4,14 @@ entrenamiento:
   num_folds: 5
   batch_size: 16
   num_epochs: 15
-  learning_rate: 1e-5
+  learning_rate: 2e-5
   weight_decay: 0.01
   patience: 5
   min_delta: 0.001
 
 modelo:
-  tipo: "robertaxlm"
-  path: 'FacebookAI/xlm-roberta-base'
+  tipo: "xlmrgalem"
+  path: 'IIC/XLM-R_Galen'
   max_len: 512
 
 datos:
@@ -22,4 +22,4 @@ datos:
   random_state: 42
 
 salida:
-  carpeta_resultados: 'C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\xlm_roberta\xlm_roberta1'
+  carpeta_resultados: 'C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\xlm_r_galen\xlm_r_galen_2'

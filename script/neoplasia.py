@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 # ============================================================
-# neoplasia_train.py  (script único)
+# neoplasia_train.py  
 # ============================================================
 import random
 import argparse
@@ -29,7 +28,6 @@ def set_global_seed(seed: int):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
-    # Opcional: algoritmos deterministas en CPU (más lentos)
     torch.use_deterministic_algorithms(False)
 
 
@@ -383,7 +381,7 @@ def run_simple(cfg):
     evaluar_en_test(out_dir,
                     df_test,
                     out_dir / "test_final",
-                    out_dir,  # tokenizer
+                    out_dir,  
                     max_len,
                     bs)
 
