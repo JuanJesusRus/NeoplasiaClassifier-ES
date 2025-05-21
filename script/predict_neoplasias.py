@@ -1,3 +1,4 @@
+from pathlib import Path
 import pandas as pd
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoConfig
@@ -11,11 +12,11 @@ import matplotlib.pyplot as plt
 from safetensors.torch import load_file
 # Configuración
 config = {
-    "ruta_csv": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\datos\test2_set.csv",  # conjunto a usar
+    "ruta_csv": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\datos\test_set_cambiado.csv",  # conjunto a usar
     "columna_texto": "TEXTO",
     "columna_etiqueta": "MULTIPLES",
-    "ruta_modelo": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\xlm_r_galen\xlm_r_galen_1",  # carpeta con config.json y tokenizer
-    "archivo_pesos": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\xlm_r_galen\xlm_r_galen_1\model.safetensors",
+    "ruta_modelo": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\xlm_roberta\xlm_roberta1",  # carpeta con config.json y tokenizer
+    "archivo_pesos": r"E:\TFG_models\temp_model_robertaxlm\roberta_xlm_1\model.safetensors",
     "batch_size": 16,
     "max_length": 512,
     "device": "cuda" if torch.cuda.is_available() else "cpu"
@@ -66,17 +67,27 @@ with torch.no_grad():
         all_labels.extend(labels.cpu().tolist())
 
 # 5. Métricas con sklearn
+out_dir = Path(r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\comparacionTestNuevos")
 acc = accuracy_score(all_labels, all_preds)
 f1 = f1_score(all_labels, all_preds)
 precision = precision_score(all_labels, all_preds)
 recall = recall_score(all_labels, all_preds)
 auc = roc_auc_score(all_labels, all_probs)
 cm = confusion_matrix(all_labels, all_preds)
-
+print(f"AUC: {auc:.4f}")
+print(f"F1: {f1:.4f}")
 print(f"Accuracy:  {acc:.4f}")
-print(f"F1 Score:  {f1:.4f}")
 print(f"Precision: {precision:.4f}")
 print(f"Recall:    {recall:.4f}")
-print(f"ROC AUC:   {auc:.4f}")
+
 print("Matriz de confusión:")
 print(cm)
+
+(out_dir / "metricas_test_xlmroberta1.txt").write_text(
+        f"AUC: {auc:.4f}\n"
+        f"Accuracy: {acc:.4f}\n"
+        f"F1: {f1:.4f}\n"
+        f"Precision: {precision:.4f}\n"
+        f"Recall: {recall:.4f}\n"
+        f"\nMatriz de Confusión:\n{cm}\n"
+    )

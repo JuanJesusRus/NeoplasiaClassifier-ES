@@ -1,11 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import seaborn as sns
+from wordcloud import WordCloud
+
 
 # === CONFIGURACIÓN ===
 INPUT_PATH = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/Multiples_neoplasias_solo_resumenes_selection/Multiples_neoplasias_solo_resumenes_deidentified_selection.csv"     # Ruta al archivo CSV (asegúrate de que exista)
-TXT_OUTPUT = "output/resumen_datos.txt"         # Archivo resumen de salida
-IMG_FOLDER = "output/img"                       # Carpeta de imágenes
+TXT_OUTPUT = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/eda/resumenDatos.txt"       # Archivo resumen de salida
+IMG_FOLDER = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/eda"                       # Carpeta de imágenes
 
 # === CREAR CARPETAS SI NO EXISTEN ===
 os.makedirs(IMG_FOLDER, exist_ok=True)
@@ -46,7 +49,7 @@ print(f"✅ Resumen guardado en {TXT_OUTPUT}")
 
 # === GRÁFICO 1: DISTRIBUCIÓN GENERAL ===
 plt.figure(figsize=(10, 6))
-plt.hist(df["Num_Palabras"], bins=30, color="skyblue", edgecolor="black")
+plt.hist(df["Num_Palabras"], bins=30, color="skyblue", edgecolor="black", density=True)
 plt.title("Distribución del número de palabras en los historiales")
 plt.xlabel("Número de palabras")
 plt.ylabel("Frecuencia")
@@ -70,3 +73,34 @@ plt.savefig(f"{IMG_FOLDER}/distribucion_palabras_por_clase.png")
 plt.close()
 
 print(f"📊 Gráficos guardados en {IMG_FOLDER}")
+
+sns.violinplot(x=col_clase, y="Num_Palabras", data=df, palette=["skyblue", "salmon"], cut=0)
+plt.title("Distribución de número de palabras por clase (Violin plot)")
+plt.savefig(f"{IMG_FOLDER}/graficoviolin.png")
+plt.close()
+
+
+for clase in [0, 1]:
+    if clase == 0:
+        nombre="Una Neoplasia"
+    else:
+        nombre="Múltiples Neoplasias"
+
+    texto = " ".join(df[df[col_clase] == clase][col_texto].astype(str).values)
+    wc = WordCloud(width=800, height=400, background_color="white").generate(texto)
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wc, interpolation='bilinear')
+    plt.axis("off")
+    plt.title(f"Nube de palabras – Clase {clase}")
+    plt.tight_layout()
+    plt.savefig(f"{IMG_FOLDER}/nubepalabras_{nombre}.png")
+    plt.close()
+
+
+conteo_clases.plot(kind='bar', color=["skyblue", "salmon"])
+plt.title("Historiales Clínicos")
+plt.xticks([0, 1], ["Una Neoplasia", "Múltiples Neoplasias"], rotation=0)
+plt.ylabel("Historiales Clínicos")
+plt.grid(axis='y')
+plt.savefig(f"{IMG_FOLDER}/conteo_clases.png")
+plt.close()

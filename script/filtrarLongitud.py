@@ -29,8 +29,11 @@ df_cortos = pd.DataFrame({"TEXTO": textos_cortos, "MULTIPLES": clases_cortas})
 df_largos = pd.DataFrame({"TEXTO": textos_largos, "MULTIPLES": clases_largos})
 
 
-ruta_guardado = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/Multiples_neoplasias_solo_resumenes_selection"
+ruta_guardado = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/basura/bas"
 
 # Guardar los DataFrames
 df_cortos.to_csv(f"{ruta_guardado}/textos_cortos_filtrados.csv", index=False)
 df_largos.to_csv(f"{ruta_guardado}/textos_largos_filtrados.csv", index=False)
+
+print (df_cortos)
+print(df_largos)
