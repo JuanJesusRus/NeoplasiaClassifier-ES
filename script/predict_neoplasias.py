@@ -12,11 +12,11 @@ import matplotlib.pyplot as plt
 from safetensors.torch import load_file
 # Configuración
 config = {
-    "ruta_csv": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\datos\test_set_cambiado.csv",  # conjunto a usar
+    "ruta_csv": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\datos\test_set_completo_cambiado.csv",  # conjunto a usar
     "columna_texto": "TEXTO",
     "columna_etiqueta": "MULTIPLES",
     "ruta_modelo": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\xlm_roberta\xlm_roberta1",  # carpeta con config.json y tokenizer
-    "archivo_pesos": r"E:\TFG_models\temp_model_robertaxlm\roberta_xlm_1\model.safetensors",
+    "archivo_pesos": r"F:\TFG_models\temp_model_robertaxlm\roberta_xlm_1\model.safetensors",
     "batch_size": 16,
     "max_length": 512,
     "device": "cuda" if torch.cuda.is_available() else "cpu"
@@ -67,7 +67,7 @@ with torch.no_grad():
         all_labels.extend(labels.cpu().tolist())
 
 # 5. Métricas con sklearn
-out_dir = Path(r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\comparacionTestNuevos")
+out_dir = Path(r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\comparacionTestCompletos")
 acc = accuracy_score(all_labels, all_preds)
 f1 = f1_score(all_labels, all_preds)
 precision = precision_score(all_labels, all_preds)
