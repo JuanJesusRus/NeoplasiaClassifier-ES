@@ -1,9 +1,0 @@
-AUC: 0.8774
-Accuracy: 0.7884
-F1: 0.7778
-Precision: 0.8140
-Recall: 0.7447
-
-Matriz de Confusión:
-[[79 16]
- [24 70]]
