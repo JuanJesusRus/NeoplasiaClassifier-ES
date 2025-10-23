@@ -1,0 +1,10 @@
+ruta_modelo: "C:\\Users\\jesus\\OneDrive - Universidad de Málaga\\Cuarto\\TFG\\NeoplasiaClassifier-ES\\output\\xlm_r_galen\\xlm_r_galen_1" 
+archivo_pesos: "F:\\TFG_models\\temp_model_xlm_galen\\galen_1\\model.safetensors"
+ruta_tokenizer: "C:\\Users\\jesus\\OneDrive - Universidad de Málaga\\Cuarto\\TFG\\NeoplasiaClassifier-ES\\output\\xlm_r_galen\\xlm_r_galen_1"
+ruta_csv: "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/comparacionModelos/datos/test_set_completo_cambiado.csv"
+columna_texto: "TEXTO"
+columna_etiqueta: "MULTIPLES"
+columna_combinacion: "NEOPLASIAS"
+combinacion_objetivo: ["Próstata"]  
+salida_dir: "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/lime/explicacion_lime.html"
+

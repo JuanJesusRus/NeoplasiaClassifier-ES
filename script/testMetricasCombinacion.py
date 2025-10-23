@@ -175,7 +175,7 @@ for modelo in modelos:
 
 
 
-print("\n🔗 Combinando todos los resultados en una única tabla...")
+print("\n Combinando todos los resultados en una única tabla...")
 
 csvs_generados = list(config["out_dir"].glob("metricas_por_combinacion_*.csv"))
 df_final = pd.DataFrame()
