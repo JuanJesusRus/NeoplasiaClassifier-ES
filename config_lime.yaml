@@ -5,6 +5,7 @@ ruta_csv: "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/Neoplasia
 columna_texto: "TEXTO"
 columna_etiqueta: "MULTIPLES"
 columna_combinacion: "NEOPLASIAS"
-combinacion_objetivo: ["Próstata"]  
+combinacion_objetivo: ["Páncreas"]  
 salida_dir: "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/lime/explicacion_lime.html"
+cualquiera: True
 

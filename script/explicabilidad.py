@@ -46,7 +46,7 @@ def predict_proba(texts):
 # -----------------------------
 df = pd.read_csv(config["ruta_csv"], sep=";", encoding="utf-8-sig")
 df["neoplasias_list"] = df[config["columna_combinacion"]].apply(ast.literal_eval)
-
+'''
 # Normalizar combinación objetivo (para comparar sin importar el orden)
 comb_obj = sorted(config["combinacion_objetivo"])
 def coincide_combinacion(row_list):
@@ -59,7 +59,31 @@ if df_filtrado.empty:
     print("No se encontraron textos con esa combinación.")
     exit()
 
+'''
 
+cualquiera = bool(config.get("cualquiera", False))
+
+# Normalizar combinación objetivo (para comparar sin importar el orden)
+comb_obj = sorted(config["combinacion_objetivo"])
+target_set = set(comb_obj)
+
+def coincide_combinacion(row_list):
+    row_set = set(row_list)
+    if cualquiera:
+        # Coincide si el documento contiene al menos todos los elementos del objetivo
+        # (superconjunto: incluye el objetivo y puede incluir más)
+        return target_set.issubset(row_set)
+    else:
+        # Coincidencia exacta (mismo conjunto, sin importar el orden)
+        return row_set == target_set
+
+df_filtrado = df[df["neoplasias_list"].apply(coincide_combinacion)].copy()
+print(df_filtrado)
+
+if df_filtrado.empty:
+    print("No se encontraron textos con esa combinación.")
+    exit()
+    
 seleccionado = int(input())
 # -----------------------------
 # Ejecutar LIME para cada texto

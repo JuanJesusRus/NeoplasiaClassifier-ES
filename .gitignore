@@ -3,3 +3,5 @@
 "*.safetensors" 
 output/comparacionModelos/
 output/
+config_lime.yaml
+config.yaml
