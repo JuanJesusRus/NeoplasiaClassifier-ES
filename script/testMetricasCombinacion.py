@@ -63,7 +63,6 @@ modelos = [
 
 
 
-    # Añade más modelos aquí con nombre, ruta_modelo, archivo_pesos
 ]
 
 
@@ -71,7 +70,7 @@ def clave_ordenada(comb_str):
     try:
         lista = ast.literal_eval(comb_str)
         if isinstance(lista, list):
-            return tuple(sorted(lista))  # Ordena alfabéticamente y lo convierte en tupla (clave hashable)
+            return tuple(sorted(lista))  
         return ()
     except Exception:
         return ()
@@ -81,19 +80,17 @@ def clave_ordenada(comb_str):
 # -------------------------------
 
 def evaluar_modelo(modelo_info, df_base):
-    print(f"\n🔍 Evaluando modelo: {modelo_info['nombre']}")
+    print(f"\n Evaluando modelo: {modelo_info['nombre']}")
     
     tokenizer = AutoTokenizer.from_pretrained(modelo_info["ruta_modelo"])
     config_modelo = AutoConfig.from_pretrained(modelo_info["ruta_modelo"])
     model = AutoModelForSequenceClassification.from_config(config_modelo)
     
-    # Cargar pesos desde archivo safetensors
     state_dict = load_file(modelo_info["archivo_pesos"])
     model.load_state_dict(state_dict)
     model.to(config["device"])
     model.eval()
     
-    # Convertir a Dataset HuggingFace y tokenizar
     dataset = Dataset.from_pandas(df_base.copy())
 
     def preprocess(example):
@@ -121,7 +118,6 @@ def evaluar_modelo(modelo_info, df_base):
             all_probs.extend(probs[:, 1].cpu().tolist())
             all_labels.extend(labels.cpu().tolist())
 
-    # Añadir resultados al DataFrame original
     df_resultado = df_base.copy()
     df_resultado["preds"] = all_preds
     df_resultado["probs_clase_1"] = all_probs
@@ -129,19 +125,15 @@ def evaluar_modelo(modelo_info, df_base):
 
 
     df_resultado["comb_key"] = df_resultado[config["columna_combinacion"]].apply(clave_ordenada)
-    # Métricas por combinación
     resultados = []
 
     for comb, df_comb in df_resultado.groupby("comb_key"):
         y_true = df_comb[config["columna_etiqueta"]]
         y_pred = df_comb["preds"]
         y_probs = df_comb["probs_clase_1"]
-        '''
-        if len(y_true) < 2:
-            continue
-        '''
+        
         resultados.append({
-            "Combinación": str(comb),  # Se muestra como ('Endometrio', 'Mama')
+            "Combinación": str(comb), 
             "Soporte": len(df_comb),
             "AUC": round(roc_auc_score(y_true, y_probs), 3) if len(set(y_true)) > 1 else None,
             "Accuracy": round(accuracy_score(y_true, y_pred), 3),
@@ -153,11 +145,9 @@ def evaluar_modelo(modelo_info, df_base):
 
     df_metricas = pd.DataFrame(resultados).sort_values(by="Soporte", ascending=False)
 
-    # 🎯 Filtrar combinaciones con más de una neoplasia
-    # Convertir combinaciones tipo "['Mama', 'Pulmón']" en listas reales
+
     df_metricas["num_neoplasias"] = df_metricas["Combinación"].apply(lambda x: len(ast.literal_eval(x)))
 
-    # Filtrar solo combinaciones con múltiples neoplasias (más de una)
     df_metricas = df_metricas[df_metricas["num_neoplasias"] > 1].copy()
 
 
@@ -186,12 +176,11 @@ for path_csv in csvs_generados:
     df_tmp["Modelo"] = modelo_nombre
     df_final = pd.concat([df_final, df_tmp], ignore_index=True)
 
-# Reordenar columnas
 cols = ["Modelo", "Combinación", "Soporte", "AUC", "Accuracy", "Precision", "Recall", "F1", "MCC"]
-# Ordenar alfabéticamente por combinación
+
 df_final = df_final.sort_values(by="Combinación").reset_index(drop=True)
 
-# Guardar tabla combinada
+
 ruta_final = config["out_dir"] / "metricas_por_combinacion_TODOS_LOS_MODELOS.csv"
 df_final.to_csv(ruta_final, index=False)
 print(f" Tabla combinada guardada como: {ruta_final.name}")

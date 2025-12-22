@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Clasificador de Neoplasias</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Clasificador de Neoplasias</h1>
+
+    <h2>Introduce un texto clínico</h2>
+
+    <form action="/predict_form" method="post">
+        <textarea name="texto" placeholder="Escribe o pega aquí la historia clínica...">{{ input_text if input_text else "" }}</textarea>
+        <br>
+        <button class="btn" type="submit">Predecir</button>
+    </form>
+
+    <h2>O sube un archivo .txt</h2>
+
+    <form action="/predict_file_form" method="post" enctype="multipart/form-data">
+        <input type="file" name="archivo" accept=".txt">
+        <button class="btn" type="submit">Subir y predecir</button>
+    </form>
+
+    {% if error %}
+        <div class="error-box">
+            <strong>Error:</strong> {{ error }}
+        </div>
+    {% endif %}
+
+    {% if resultado %}
+        <div class="resultado-box">
+            <h3>Resultado</h3>
+            <p><strong>Predicción:</strong> {{ resultado.clase }}</p>
+            <p><strong>Probabilidad:</strong> {{ resultado.probabilidad }}</p>
+        </div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

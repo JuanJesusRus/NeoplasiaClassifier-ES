@@ -5,3 +5,5 @@ output/comparacionModelos/
 output/
 config_lime.yaml
 config.yaml
+*.yaml
+app/__pycache__/

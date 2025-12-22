@@ -1,0 +1,71 @@
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #eef2f7;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+h2 {
+    margin-top: 25px;
+    font-size: 22px;
+}
+
+textarea {
+    width: 100%;
+    height: 180px;
+    padding: 14px;
+    font-size: 15px;
+    border: 1px solid #b5c3d6;
+    border-radius: 8px;
+    resize: vertical;
+}
+
+.btn {
+    background-color: #2979ff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    margin-top: 10px;
+}
+
+.btn:hover {
+    background-color: #155ecb;
+}
+
+/* --- SECCIÓN DE RESULTADOS --- */
+.resultado-box {
+    background: #e9f9ed;
+    border-left: 6px solid #4caf50;
+    padding: 20px;
+    margin-top: 30px;
+    border-radius: 8px;
+}
+
+.resultado-box h3 {
+    margin-top: 0;
+}
+
+.error-box {
+    background: #ffeaea;
+    border-left: 6px solid #ff4a4a;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 8px;
+}
