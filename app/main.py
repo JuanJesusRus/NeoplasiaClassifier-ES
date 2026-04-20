@@ -25,36 +25,38 @@ def home(request: Request):
 
 
 @app.post("/predict_form")
-async def predict_form(request: Request, texto: str = Form("")):
+async def predict_form(request: Request, texto: str = Form(""), mode: str = Form("binario")):
     if not texto.strip():
         return templates.TemplateResponse(
             "index.html",
             {"request": request, "error": "El texto está vacío."}
         )
 
-    resultado = inference_engine.predecir(texto)
+    resultado = inference_engine.predecir(texto, mode=mode)
 
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "resultado": resultado,
-            "input_text": texto
+            "input_text": texto,
+            "input_mode": mode
         }
     )
 
 
 @app.post("/predict_file_form")
-async def predict_file_form(request: Request, archivo: UploadFile = File(...)):
+async def predict_file_form(request: Request, archivo: UploadFile = File(...), mode: str = Form("binario")):
     contenido = (await archivo.read()).decode("utf-8")
 
-    resultado = inference_engine.predecir(contenido)
+    resultado = inference_engine.predecir(contenido, mode=mode)
 
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "resultado": resultado,
-            "input_text": contenido
+            "input_text": contenido,
+            "input_mode": mode
         }
     )

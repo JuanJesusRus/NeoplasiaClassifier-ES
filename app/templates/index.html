@@ -16,6 +16,11 @@
     <form action="/predict_form" method="post">
         <textarea name="texto" placeholder="Escribe o pega aquí la historia clínica...">{{ input_text if input_text else "" }}</textarea>
         <br>
+        <label for="mode">Modo de predicción:</label>
+        <select name="mode" id="mode">
+            <option value="binario" {% if input_mode == "binario" or not input_mode %}selected{% endif %}>Binario</option>
+            <option value="cascade" {% if input_mode == "cascade" %}selected{% endif %}>Cascade</option>
+        </select>
         <button class="btn" type="submit">Predecir</button>
     </form>
 
@@ -23,6 +28,12 @@
 
     <form action="/predict_file_form" method="post" enctype="multipart/form-data">
         <input type="file" name="archivo" accept=".txt">
+        <br>
+        <label for="mode_file">Modo de predicción:</label>
+        <select name="mode" id="mode_file">
+            <option value="binario" {% if input_mode == "binario" or not input_mode %}selected{% endif %}>Binario</option>
+            <option value="cascade" {% if input_mode == "cascade" %}selected{% endif %}>Cascade</option>
+        </select>
         <button class="btn" type="submit">Subir y predecir</button>
     </form>
 
@@ -34,10 +45,58 @@
 
     {% if resultado %}
         <div class="resultado-box">
-            <h3>Resultado</h3>
+            <h3>Resultado binario</h3>
             <p><strong>Predicción:</strong> {{ resultado.clase }}</p>
             <p><strong>Probabilidad:</strong> {{ resultado.probabilidad }}</p>
+            {% if resultado.explicacion %}
+                <h4>Explicación LIME</h4>
+                <ul>
+                    {% for palabra, peso in resultado.explicacion %}
+                        <li><strong>{{ palabra }}:</strong> {{ "%.4f"|format(peso) }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         </div>
+
+        {% if resultado.cascade and resultado.cascade.activado %}
+            <div class="resultado-box">
+                <h3>Resultado cascade</h3>
+                {% if resultado.cascade.error %}
+                    <p style="color: red;"><strong>Error:</strong> {{ resultado.cascade.error }}</p>
+                {% else %}
+                    {% if resultado.cascade.predicciones %}
+                        <h4>Predicciones (≥ umbral):</h4>
+                        <ul>
+                            {% for etiqueta, prob in resultado.cascade.predicciones.items() %}
+                                <li><strong>{{ etiqueta }}:</strong> {{ prob }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No se ha detectado ninguna etiqueta con el umbral configurado.</p>
+                    {% endif %}
+                    
+                    <h4>Probabilidades completas - Modelo Mama:</h4>
+                    <div style="font-size: 0.9em; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+                        {% for etiqueta, prob in resultado.cascade.probabilidades_mama.items() %}
+                            <span style="display: inline-block; margin: 2px 5px; padding: 2px 5px; background: #f0f0f0; border-radius: 3px;">
+                                {{ etiqueta }}: {{ prob }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                    
+                    <h4>Probabilidades completas - Modelo Resto:</h4>
+                    <div style="font-size: 0.9em; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+                        {% for etiqueta, prob in resultado.cascade.probabilidades_resto.items() %}
+                            <span style="display: inline-block; margin: 2px 5px; padding: 2px 5px; background: #f0f0f0; border-radius: 3px;">
+                                {{ etiqueta }}: {{ prob }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                    
+                    <p><strong>Umbrales:</strong> Mama={{ resultado.cascade.umbral_mama }}, Resto={{ resultado.cascade.umbral_resto }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
     {% endif %}
 
 </div>
