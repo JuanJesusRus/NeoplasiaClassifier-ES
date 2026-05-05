@@ -188,7 +188,7 @@ class NeoplasiaInference:
             "umbral_resto": self.umbral_resto
         }
 
-    def predecir(self, texto: str, mode: str = "binario"):
+    def predecir(self, texto: str, mode: str = "binario", generar_explicacion: bool = False):
         texto = self.normalizar(texto)
 
         inputs = self.tokenizer(
@@ -213,7 +213,7 @@ class NeoplasiaInference:
             "probabilidad": round(score, 4)
         }
 
-        if mode == "binario":
+        if mode == "binario" and generar_explicacion:
             resultado["explicacion"] = explicar_texto(texto, self.model, self.tokenizer, self.max_length)
 
         if mode == "cascade":

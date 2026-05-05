@@ -21,6 +21,16 @@
             <option value="binario" {% if input_mode == "binario" or not input_mode %}selected{% endif %}>Binario</option>
             <option value="cascade" {% if input_mode == "cascade" %}selected{% endif %}>Cascade</option>
         </select>
+        <label class="checkbox-field">
+            <input
+                type="checkbox"
+                name="explicacion"
+                {% if input_explicacion %}checked{% endif %}
+                {% if input_mode == "cascade" %}disabled{% endif %}
+            >
+            Generar explicación LIME
+        </label>
+        <p class="help-text">La explicación LIME solo está disponible en modo binario.</p>
         <button class="btn" type="submit">Predecir</button>
     </form>
 
@@ -34,6 +44,16 @@
             <option value="binario" {% if input_mode == "binario" or not input_mode %}selected{% endif %}>Binario</option>
             <option value="cascade" {% if input_mode == "cascade" %}selected{% endif %}>Cascade</option>
         </select>
+        <label class="checkbox-field">
+            <input
+                type="checkbox"
+                name="explicacion"
+                {% if input_explicacion %}checked{% endif %}
+                {% if input_mode == "cascade" %}disabled{% endif %}
+            >
+            Generar explicación LIME
+        </label>
+        <p class="help-text">La explicación LIME solo está disponible en modo binario.</p>
         <button class="btn" type="submit">Subir y predecir</button>
     </form>
 
@@ -74,7 +94,7 @@
                     {% else %}
                         <p>No se ha detectado ninguna etiqueta con el umbral configurado.</p>
                     {% endif %}
-                    
+
                     <h4>Probabilidades completas - Modelo Mama:</h4>
                     <div style="font-size: 0.9em; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
                         {% for etiqueta, prob in resultado.cascade.probabilidades_mama.items() %}
@@ -83,7 +103,7 @@
                             </span>
                         {% endfor %}
                     </div>
-                    
+
                     <h4>Probabilidades completas - Modelo Resto:</h4>
                     <div style="font-size: 0.9em; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
                         {% for etiqueta, prob in resultado.cascade.probabilidades_resto.items() %}
@@ -92,7 +112,7 @@
                             </span>
                         {% endfor %}
                     </div>
-                    
+
                     <p><strong>Umbrales:</strong> Mama={{ resultado.cascade.umbral_mama }}, Resto={{ resultado.cascade.umbral_resto }}</p>
                 {% endif %}
             </div>
@@ -100,6 +120,37 @@
     {% endif %}
 
 </div>
+
+<script>
+    function syncExplanationAvailability(selectId) {
+        const modeSelect = document.getElementById(selectId);
+        if (!modeSelect) {
+            return;
+        }
+
+        const explanationCheckbox = modeSelect.form.querySelector('input[name="explicacion"]');
+        if (!explanationCheckbox) {
+            return;
+        }
+
+        const isBinaryMode = modeSelect.value === "binario";
+        explanationCheckbox.disabled = !isBinaryMode;
+
+        if (!isBinaryMode) {
+            explanationCheckbox.checked = false;
+        }
+    }
+
+    ["mode", "mode_file"].forEach((selectId) => {
+        const modeSelect = document.getElementById(selectId);
+        if (!modeSelect) {
+            return;
+        }
+
+        syncExplanationAvailability(selectId);
+        modeSelect.addEventListener("change", () => syncExplanationAvailability(selectId));
+    });
+</script>
 
 </body>
 </html>

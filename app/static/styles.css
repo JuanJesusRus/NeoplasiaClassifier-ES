@@ -34,6 +34,28 @@ textarea {
     resize: vertical;
 }
 
+select,
+input[type="file"] {
+    margin-top: 10px;
+}
+
+.checkbox-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.checkbox-field input[type="checkbox"] {
+    margin: 0;
+}
+
+.help-text {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: #5b6b7f;
+}
+
 .btn {
     background-color: #2979ff;
     color: white;

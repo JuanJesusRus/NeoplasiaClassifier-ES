@@ -6,7 +6,7 @@ import os
 ruta_csv = r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\comparacionTestCompletos\metricas_por_combinacion_TODOS_LOS_MODELOS.csv"
 
 # Carpeta de salida para guardar los gráficos
-salida_dir = os.path.join(os.path.dirname(ruta_csv), "graficas_precision_recall")
+salida_dir = os.path.join(os.path.dirname(ruta_csv), "graficas_f1_recall")
 os.makedirs(salida_dir, exist_ok=True)
 
 # Leer CSV
@@ -39,7 +39,7 @@ for combinacion in combinaciones:
     ax.set_ylim(0, 1.1)
     ax.set_yticks([i/10 for i in range(0, 11)])  
     ax.set_ylabel("Valor")
-    ax.set_title(f"Precision y Recall - {combinacion}")
+    ax.set_title(f"F1 y Recall - {combinacion}")
     ax.legend()
     ax.grid(True, linestyle="--", alpha=0.5)
 
@@ -49,4 +49,4 @@ for combinacion in combinaciones:
     plt.savefig(os.path.join(salida_dir, nombre_archivo), dpi=300)
     plt.close()
 
-print(f"✅ Gráficas guardadas en: {salida_dir}")
+print(f"Gráficas guardadas en: {salida_dir}")

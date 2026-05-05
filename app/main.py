@@ -19,20 +19,41 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "input_explicacion": False}
+    )
 
 
 @app.post("/predict_form")
-async def predict_form(request: Request, texto: str = Form(""), mode: str = Form("binario")):
+async def predict_form(
+    request: Request,
+    texto: str = Form(""),
+    mode: str = Form("binario"),
+    explicacion: str | None = Form(None),
+):
+    generar_explicacion = explicacion == "on"
+
     if not texto.strip():
         return templates.TemplateResponse(
             "index.html",
-            {"request": request, "error": "El texto está vacío."}
+            {
+                "request": request,
+                "error": "El texto está vacío.",
+                "input_text": texto,
+                "input_mode": mode,
+                "input_explicacion": generar_explicacion,
+            }
         )
 
-    resultado = inference_engine.predecir(texto, mode=mode)
+    resultado = inference_engine.predecir(
+        texto,
+        mode=mode,
+        generar_explicacion=generar_explicacion,
+    )
 
     return templates.TemplateResponse(
         "index.html",
@@ -40,16 +61,27 @@ async def predict_form(request: Request, texto: str = Form(""), mode: str = Form
             "request": request,
             "resultado": resultado,
             "input_text": texto,
-            "input_mode": mode
+            "input_mode": mode,
+            "input_explicacion": generar_explicacion,
         }
     )
 
 
 @app.post("/predict_file_form")
-async def predict_file_form(request: Request, archivo: UploadFile = File(...), mode: str = Form("binario")):
+async def predict_file_form(
+    request: Request,
+    archivo: UploadFile = File(...),
+    mode: str = Form("binario"),
+    explicacion: str | None = Form(None),
+):
+    generar_explicacion = explicacion == "on"
     contenido = (await archivo.read()).decode("utf-8")
 
-    resultado = inference_engine.predecir(contenido, mode=mode)
+    resultado = inference_engine.predecir(
+        contenido,
+        mode=mode,
+        generar_explicacion=generar_explicacion,
+    )
 
     return templates.TemplateResponse(
         "index.html",
@@ -57,6 +89,7 @@ async def predict_file_form(request: Request, archivo: UploadFile = File(...), m
             "request": request,
             "resultado": resultado,
             "input_text": contenido,
-            "input_mode": mode
+            "input_mode": mode,
+            "input_explicacion": generar_explicacion,
         }
     )
