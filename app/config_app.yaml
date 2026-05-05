@@ -1,0 +1,16 @@
+modelo:
+  ruta_modelo: "C:\\TFG_models\\models\\binario\\galen_1"
+  ruta_tokenizer: "C:\\TFG_models\\models\\binario\\galen_1"
+  max_length: 512
+
+cascade:
+  ruta_mama_model: "C:\\TFG_models\\models\\mama\\best_model"
+  ruta_mama_labels: "C:\\TFG_models\\models\\mama"
+  ruta_resto_model: "C:\\TFG_models\\models\\resto\\best_model"
+  ruta_resto_labels: "C:\\TFG_models\\models\\resto"
+  umbral_mama: 0.5
+  umbral_resto: 0.2
+
+api:
+  titulo: "Clasificador de Neoplasias"
+  version: "1.0"
