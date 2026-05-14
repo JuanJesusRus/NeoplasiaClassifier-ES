@@ -2,124 +2,252 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clasificador de Neoplasias</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 
-<div class="container">
-
-    <h1>Clasificador de Neoplasias</h1>
-
-    <h2>Introduce un texto clínico</h2>
-
-    <form action="/predict_form" method="post">
-        <textarea name="texto" placeholder="Escribe o pega aquí la historia clínica...">{{ input_text if input_text else "" }}</textarea>
-        <br>
-        <label for="mode">Modo de predicción:</label>
-        <select name="mode" id="mode">
-            <option value="binario" {% if input_mode == "binario" or not input_mode %}selected{% endif %}>Binario</option>
-            <option value="cascade" {% if input_mode == "cascade" %}selected{% endif %}>Cascade</option>
-        </select>
-        <label class="checkbox-field">
-            <input
-                type="checkbox"
-                name="explicacion"
-                {% if input_explicacion %}checked{% endif %}
-                {% if input_mode == "cascade" %}disabled{% endif %}
-            >
-            Generar explicación LIME
-        </label>
-        <p class="help-text">La explicación LIME solo está disponible en modo binario.</p>
-        <button class="btn" type="submit">Predecir</button>
-    </form>
-
-    <h2>O sube un archivo .txt</h2>
-
-    <form action="/predict_file_form" method="post" enctype="multipart/form-data">
-        <input type="file" name="archivo" accept=".txt">
-        <br>
-        <label for="mode_file">Modo de predicción:</label>
-        <select name="mode" id="mode_file">
-            <option value="binario" {% if input_mode == "binario" or not input_mode %}selected{% endif %}>Binario</option>
-            <option value="cascade" {% if input_mode == "cascade" %}selected{% endif %}>Cascade</option>
-        </select>
-        <label class="checkbox-field">
-            <input
-                type="checkbox"
-                name="explicacion"
-                {% if input_explicacion %}checked{% endif %}
-                {% if input_mode == "cascade" %}disabled{% endif %}
-            >
-            Generar explicación LIME
-        </label>
-        <p class="help-text">La explicación LIME solo está disponible en modo binario.</p>
-        <button class="btn" type="submit">Subir y predecir</button>
-    </form>
-
-    {% if error %}
-        <div class="error-box">
-            <strong>Error:</strong> {{ error }}
+<header class="app-header">
+    <div class="header-content">
+        <div>
+            <p class="eyebrow">Dashboard clínico</p>
+            <h1>Clasificador de Neoplasias</h1>
+            <p class="subtitle">Sistema de clasificación de textos clínicos mediante IA</p>
         </div>
+        <div class="header-badge">
+            <span class="status-dot"></span>
+            FastAPI + IA
+        </div>
+    </div>
+</header>
+
+<main class="page-shell">
+    {% if error %}
+        <section class="alert-card" role="alert">
+            <strong>Error</strong>
+            <span>{{ error }}</span>
+        </section>
     {% endif %}
+
+    <section class="dashboard-grid">
+        <form class="card clinical-card input-card" action="/predict_form" method="post">
+            <div class="card-header">
+                <div>
+                    <p class="section-label">Entrada clínica</p>
+                    <h2>Texto clínico</h2>
+                </div>
+                <button class="ghost-button" type="button" id="clearTextButton">Limpiar</button>
+            </div>
+
+            <label class="sr-only" for="clinicalText">Texto clínico</label>
+            <textarea
+                id="clinicalText"
+                name="texto"
+                placeholder="Escribe o pega aquí la historia clínica..."
+            >{{ input_text if input_text else "" }}</textarea>
+
+            <div class="textarea-footer">
+                <span id="charCounter">0 caracteres</span>
+                <span>Texto libre anonimizado</span>
+            </div>
+
+            <div class="options-panel">
+                <div class="field-group">
+                    <label for="mode">Modo de predicción</label>
+                    <select name="mode" id="mode">
+                        <option value="binario" {% if input_mode == "binario" or not input_mode %}selected{% endif %}>Binario</option>
+                        <option value="cascade" {% if input_mode == "cascade" %}selected{% endif %}>Cascade</option>
+                    </select>
+                </div>
+
+                <label class="switch-field">
+                    <input
+                        type="checkbox"
+                        name="explicacion"
+                        {% if input_explicacion %}checked{% endif %}
+                        {% if input_mode == "cascade" %}disabled{% endif %}
+                    >
+                    <span class="switch-ui"></span>
+                    <span>
+                        <strong>Generar explicación con LIME</strong>
+                        <small>Puede tardar ~30 segundos. Disponible en modo binario.</small>
+                    </span>
+                </label>
+            </div>
+
+            <button class="primary-button" type="submit">Analizar texto</button>
+        </form>
+
+        <aside class="side-stack">
+            <form class="card upload-card" action="/predict_file_form" method="post" enctype="multipart/form-data">
+                <div class="card-header">
+                    <div>
+                        <p class="section-label">Carga de archivo</p>
+                        <h2>Subir .txt</h2>
+                    </div>
+                </div>
+
+                <label class="drop-zone" for="archivo">
+                    <span class="upload-icon">TXT</span>
+                    <strong>Selecciona un archivo clínico</strong>
+                    <small>Formato admitido: .txt en UTF-8</small>
+                    <input id="archivo" type="file" name="archivo" accept=".txt">
+                </label>
+
+                <div class="field-group">
+                    <label for="mode_file">Modo de predicción</label>
+                    <select name="mode" id="mode_file">
+                        <option value="binario" {% if input_mode == "binario" or not input_mode %}selected{% endif %}>Binario</option>
+                        <option value="cascade" {% if input_mode == "cascade" %}selected{% endif %}>Cascade</option>
+                    </select>
+                </div>
+
+                <label class="switch-field compact">
+                    <input
+                        type="checkbox"
+                        name="explicacion"
+                        {% if input_explicacion %}checked{% endif %}
+                        {% if input_mode == "cascade" %}disabled{% endif %}
+                    >
+                    <span class="switch-ui"></span>
+                    <span>
+                        <strong>Explicación LIME</strong>
+                        <small>Puede tardar ~30 segundos</small>
+                    </span>
+                </label>
+
+                <button class="secondary-button" type="submit">Subir y analizar</button>
+            </form>
+
+            <section class="card info-card">
+                <p class="section-label">Configuración</p>
+                <h2>Opciones de análisis</h2>
+                <div class="info-list">
+                    <div>
+                        <strong>Binario</strong>
+                        <span>Clasificación principal con probabilidad asociada.</span>
+                    </div>
+                    <div>
+                        <strong>Cascade</strong>
+                        <span>Activa el análisis multietiqueta configurado.</span>
+                    </div>
+                </div>
+            </section>
+        </aside>
+    </section>
 
     {% if resultado %}
-        <div class="resultado-box">
-            <h3>Resultado binario</h3>
-            <p><strong>Predicción:</strong> {{ resultado.clase }}</p>
-            <p><strong>Probabilidad:</strong> {{ resultado.probabilidad }}</p>
+        {% set confidence = resultado.probabilidad * 100 %}
+        <section class="results-grid">
+            <article class="result-card">
+                <div class="result-header">
+                    <div>
+                        <p class="section-label">Resultado</p>
+                        <h2>Predicción binaria</h2>
+                    </div>
+                    <span class="result-pill">Completado</span>
+                </div>
+
+                <div class="prediction-panel">
+                    <span class="prediction-label">{{ resultado.clase }}</span>
+                    <strong class="probability">{{ "%.2f"|format(confidence) }}%</strong>
+                    <div class="confidence-track" aria-label="Confianza de la predicción">
+                        <span style="width: {{ "%.2f"|format(confidence) }}%;"></span>
+                    </div>
+                    <p>Confianza estimada del modelo para la clase seleccionada.</p>
+                </div>
+            </article>
+
             {% if resultado.explicacion %}
-                <h4>Explicación LIME</h4>
-                <ul>
-                    {% for palabra, peso in resultado.explicacion %}
-                        <li><strong>{{ palabra }}:</strong> {{ "%.4f"|format(peso) }}</li>
-                    {% endfor %}
-                </ul>
+                <article class="card lime-card">
+                    <div class="card-header">
+                        <div>
+                            <p class="section-label">Interpretabilidad</p>
+                            <h2>Explicación LIME</h2>
+                        </div>
+                    </div>
+
+                    <div class="lime-list">
+                        {% for palabra, peso in resultado.explicacion %}
+                            {% set peso_abs = peso if peso >= 0 else -peso %}
+                            {% set bar_width = peso_abs * 900 %}
+                            {% if bar_width > 100 %}
+                                {% set bar_width = 100 %}
+                            {% endif %}
+                            <div class="lime-row {% if peso >= 0 %}positive{% else %}negative{% endif %}">
+                                <span class="lime-word">{{ palabra }}</span>
+                                <div class="lime-bar">
+                                    <span style="width: {{ "%.2f"|format(bar_width) }}%;"></span>
+                                </div>
+                                <span class="lime-weight">{{ "%.4f"|format(peso) }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="lime-legend">
+                        <span><i class="legend-dot green"></i>Contribuye a múltiples neoplasias</span>
+                        <span><i class="legend-dot red"></i>Contribuye a una neoplasia</span>
+                    </div>
+
+                    <p class="disclaimer">Las explicaciones LIME son aproximadas y sirven como ayuda interpretativa, no como verdad clínica.</p>
+                </article>
             {% endif %}
-        </div>
+        </section>
 
         {% if resultado.cascade and resultado.cascade.activado %}
-            <div class="resultado-box">
-                <h3>Resultado cascade</h3>
+            <section class="card cascade-card">
+                <div class="card-header">
+                    <div>
+                        <p class="section-label">Análisis avanzado</p>
+                        <h2>Resultado cascade</h2>
+                    </div>
+                    <span class="threshold-pill">Mama {{ resultado.cascade.umbral_mama }} · Resto {{ resultado.cascade.umbral_resto }}</span>
+                </div>
+
                 {% if resultado.cascade.error %}
-                    <p style="color: red;"><strong>Error:</strong> {{ resultado.cascade.error }}</p>
+                    <div class="alert-card inline">
+                        <strong>Error</strong>
+                        <span>{{ resultado.cascade.error }}</span>
+                    </div>
                 {% else %}
-                    {% if resultado.cascade.predicciones %}
-                        <h4>Predicciones (≥ umbral):</h4>
-                        <ul>
+                    <div class="cascade-summary">
+                        {% if resultado.cascade.predicciones %}
                             {% for etiqueta, prob in resultado.cascade.predicciones.items() %}
-                                <li><strong>{{ etiqueta }}:</strong> {{ prob }}</li>
+                                <div class="prediction-chip">
+                                    <strong>{{ etiqueta }}</strong>
+                                    <span>{{ prob }}</span>
+                                </div>
                             {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>No se ha detectado ninguna etiqueta con el umbral configurado.</p>
-                    {% endif %}
-
-                    <h4>Probabilidades completas - Modelo Mama:</h4>
-                    <div style="font-size: 0.9em; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
-                        {% for etiqueta, prob in resultado.cascade.probabilidades_mama.items() %}
-                            <span style="display: inline-block; margin: 2px 5px; padding: 2px 5px; background: #f0f0f0; border-radius: 3px;">
-                                {{ etiqueta }}: {{ prob }}
-                            </span>
-                        {% endfor %}
+                        {% else %}
+                            <p>No se ha detectado ninguna etiqueta con el umbral configurado.</p>
+                        {% endif %}
                     </div>
 
-                    <h4>Probabilidades completas - Modelo Resto:</h4>
-                    <div style="font-size: 0.9em; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
-                        {% for etiqueta, prob in resultado.cascade.probabilidades_resto.items() %}
-                            <span style="display: inline-block; margin: 2px 5px; padding: 2px 5px; background: #f0f0f0; border-radius: 3px;">
-                                {{ etiqueta }}: {{ prob }}
-                            </span>
-                        {% endfor %}
-                    </div>
+                    <div class="probability-columns">
+                        <div>
+                            <h3>Modelo Mama</h3>
+                            <div class="probability-list">
+                                {% for etiqueta, prob in resultado.cascade.probabilidades_mama.items() %}
+                                    <span>{{ etiqueta }} <strong>{{ prob }}</strong></span>
+                                {% endfor %}
+                            </div>
+                        </div>
 
-                    <p><strong>Umbrales:</strong> Mama={{ resultado.cascade.umbral_mama }}, Resto={{ resultado.cascade.umbral_resto }}</p>
+                        <div>
+                            <h3>Modelo Resto</h3>
+                            <div class="probability-list">
+                                {% for etiqueta, prob in resultado.cascade.probabilidades_resto.items() %}
+                                    <span>{{ etiqueta }} <strong>{{ prob }}</strong></span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                 {% endif %}
-            </div>
+            </section>
         {% endif %}
     {% endif %}
-
-</div>
+</main>
 
 <script>
     function syncExplanationAvailability(selectId) {
@@ -150,6 +278,32 @@
         syncExplanationAvailability(selectId);
         modeSelect.addEventListener("change", () => syncExplanationAvailability(selectId));
     });
+
+    const clinicalText = document.getElementById("clinicalText");
+    const charCounter = document.getElementById("charCounter");
+    const clearTextButton = document.getElementById("clearTextButton");
+
+    function updateCounter() {
+        if (!clinicalText || !charCounter) {
+            return;
+        }
+
+        const count = clinicalText.value.length;
+        charCounter.textContent = `${count.toLocaleString("es-ES")} caracteres`;
+    }
+
+    if (clinicalText) {
+        clinicalText.addEventListener("input", updateCounter);
+        updateCounter();
+    }
+
+    if (clearTextButton && clinicalText) {
+        clearTextButton.addEventListener("click", () => {
+            clinicalText.value = "";
+            clinicalText.focus();
+            updateCounter();
+        });
+    }
 </script>
 
 </body>
