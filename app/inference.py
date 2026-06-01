@@ -216,7 +216,7 @@ class NeoplasiaInference:
         if mode == "binario" and generar_explicacion:
             resultado["explicacion"] = explicar_texto(texto, self.model, self.tokenizer, self.max_length)
 
-        if mode == "cascade":
-            resultado["cascade"] = self._cascade_predict(texto)
+        if mode == "multietiqueta":
+            resultado["multietiqueta"] = self._cascade_predict(texto)
 
         return resultado

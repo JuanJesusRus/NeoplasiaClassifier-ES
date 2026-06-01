@@ -4,11 +4,12 @@ from lime.lime_text import LimeTextExplainer
 
 NUM_SAMPLES = 100
 BATCH_SIZE = 4
+RANDOM_STATE = 42
 
 
 def explicar_texto(texto: str, model, tokenizer, max_length: int) -> list:
     class_names = ["Una neoplasia", "Múltiples neoplasias"]
-    explainer = LimeTextExplainer(class_names=class_names)
+    explainer = LimeTextExplainer(class_names=class_names, random_state=RANDOM_STATE)
     model.to("cpu")
     model.eval()
 

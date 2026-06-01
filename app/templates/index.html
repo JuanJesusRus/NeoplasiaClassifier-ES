@@ -57,7 +57,7 @@
                     <label for="mode">Modo de predicción</label>
                     <select name="mode" id="mode">
                         <option value="binario" {% if input_mode == "binario" or not input_mode %}selected{% endif %}>Binario</option>
-                        <option value="cascade" {% if input_mode == "cascade" %}selected{% endif %}>Cascade</option>
+                        <option value="multietiqueta" {% if input_mode == "multietiqueta" %}selected{% endif %}>Multietiqueta</option>
                     </select>
                 </div>
 
@@ -66,7 +66,7 @@
                         type="checkbox"
                         name="explicacion"
                         {% if input_explicacion %}checked{% endif %}
-                        {% if input_mode == "cascade" %}disabled{% endif %}
+                        {% if input_mode == "multietiqueta" %}disabled{% endif %}
                     >
                     <span class="switch-ui"></span>
                     <span>
@@ -99,7 +99,7 @@
                     <label for="mode_file">Modo de predicción</label>
                     <select name="mode" id="mode_file">
                         <option value="binario" {% if input_mode == "binario" or not input_mode %}selected{% endif %}>Binario</option>
-                        <option value="cascade" {% if input_mode == "cascade" %}selected{% endif %}>Cascade</option>
+                        <option value="multietiqueta" {% if input_mode == "multietiqueta" %}selected{% endif %}>Multietiqueta</option>
                     </select>
                 </div>
 
@@ -108,7 +108,7 @@
                         type="checkbox"
                         name="explicacion"
                         {% if input_explicacion %}checked{% endif %}
-                        {% if input_mode == "cascade" %}disabled{% endif %}
+                        {% if input_mode == "multietiqueta" %}disabled{% endif %}
                     >
                     <span class="switch-ui"></span>
                     <span>
@@ -129,7 +129,7 @@
                         <span>Clasificación principal con probabilidad asociada.</span>
                     </div>
                     <div>
-                        <strong>Cascade</strong>
+                        <strong>Multietiqueta</strong>
                         <span>Activa el análisis multietiqueta configurado.</span>
                     </div>
                 </div>
@@ -195,25 +195,25 @@
             {% endif %}
         </section>
 
-        {% if resultado.cascade and resultado.cascade.activado %}
-            <section class="card cascade-card">
+        {% if resultado.multietiqueta and resultado.multietiqueta.activado %}
+            <section class="card multietiqueta-card">
                 <div class="card-header">
                     <div>
                         <p class="section-label">Análisis avanzado</p>
-                        <h2>Resultado cascade</h2>
+                        <h2>Resultado multietiqueta</h2>
                     </div>
-                    <span class="threshold-pill">Mama {{ resultado.cascade.umbral_mama }} · Resto {{ resultado.cascade.umbral_resto }}</span>
+                    <span class="threshold-pill">Mama {{ resultado.multietiqueta.umbral_mama }} · Resto {{ resultado.multietiqueta.umbral_resto }}</span>
                 </div>
 
-                {% if resultado.cascade.error %}
+                {% if resultado.multietiqueta.error %}
                     <div class="alert-card inline">
                         <strong>Error</strong>
-                        <span>{{ resultado.cascade.error }}</span>
+                        <span>{{ resultado.multietiqueta.error }}</span>
                     </div>
                 {% else %}
-                    <div class="cascade-summary">
-                        {% if resultado.cascade.predicciones %}
-                            {% for etiqueta, prob in resultado.cascade.predicciones.items() %}
+                    <div class="multietiqueta-summary">
+                        {% if resultado.multietiqueta.predicciones %}
+                            {% for etiqueta, prob in resultado.multietiqueta.predicciones.items() %}
                                 <div class="prediction-chip">
                                     <strong>{{ etiqueta }}</strong>
                                     <span>{{ prob }}</span>
@@ -228,7 +228,7 @@
                         <div>
                             <h3>Modelo Mama</h3>
                             <div class="probability-list">
-                                {% for etiqueta, prob in resultado.cascade.probabilidades_mama.items() %}
+                                {% for etiqueta, prob in resultado.multietiqueta.probabilidades_mama.items() %}
                                     <span>{{ etiqueta }} <strong>{{ prob }}</strong></span>
                                 {% endfor %}
                             </div>
@@ -237,7 +237,7 @@
                         <div>
                             <h3>Modelo Resto</h3>
                             <div class="probability-list">
-                                {% for etiqueta, prob in resultado.cascade.probabilidades_resto.items() %}
+                                {% for etiqueta, prob in resultado.multietiqueta.probabilidades_resto.items() %}
                                     <span>{{ etiqueta }} <strong>{{ prob }}</strong></span>
                                 {% endfor %}
                             </div>

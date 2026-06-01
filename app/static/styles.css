@@ -489,17 +489,20 @@ select {
 
 .lime-row {
     display: grid;
-    grid-template-columns: minmax(90px, 0.42fr) minmax(120px, 1fr) 76px;
-    gap: 12px;
+    grid-template-columns: minmax(130px, 180px) 1fr 76px;
+    gap: 8px 12px;
     align-items: center;
 }
 
 .lime-word {
-    overflow: hidden;
     color: #263548;
     font-weight: 800;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: unset;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    min-width: 0;
 }
 
 .lime-bar {
@@ -528,6 +531,7 @@ select {
     color: var(--muted);
     font-variant-numeric: tabular-nums;
     text-align: right;
+    white-space: nowrap;
 }
 
 .lime-legend {
