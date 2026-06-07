@@ -45,7 +45,6 @@ class NeoplasiaInference:
             self.umbral_mama = cascade_config.get("umbral_mama", 0.5)
             self.umbral_resto = cascade_config.get("umbral_resto", 0.5)
 
-            print(f"[DEBUG] Cargando modelos cascade:")
             print(f"  Mama model: {self.ruta_mama_model}")
             print(f"  Resto model: {self.ruta_resto_model}")
 
@@ -59,8 +58,7 @@ class NeoplasiaInference:
 
             self.id2label_mama = self._load_label_map(self.ruta_mama_labels)
             self.id2label_resto = self._load_label_map(self.ruta_resto_labels)
-            print(f"  Etiquetas Mama: {list(self.id2label_mama.values())}")
-            print(f"  Etiquetas Resto: {list(self.id2label_resto.values())}")
+            
         else:
             self.ruta_mama_model = None
             self.ruta_mama_labels = None

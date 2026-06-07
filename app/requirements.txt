@@ -5,3 +5,6 @@ transformers
 torch
 pyyaml
 jinja2
+python-multipart
+lime
+sentencepiece
