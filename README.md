@@ -1,114 +1,57 @@
-# Clasificador de Neoplasias mediante NLP
+# Clasificador de Neoplasias mediante Procesamiento de Lenguaje Natural
 
-Aplicación web desarrollada con FastAPI para la clasificación de historias clínicas en:
+Aplicación web desarrollada con FastAPI para la clasificación automática de historias clínicas electrónicas.
 
-- **Una neoplasia**
-- **Múltiples neoplasias**
+Funcionalidades principales:
 
-Incluye un sistema de **explicabilidad basado en LIME** para interpretar las predicciones del modelo.
+- Clasificación binaria (una neoplasia frente a múltiples neoplasias).
+- Clasificación multietiqueta mediante un enfoque en cascada.
+- Explicabilidad de predicciones mediante LIME.
 
----
-
-##  Descripción
-
-El sistema utiliza modelos basados en Transformers entrenados sobre texto clínico para:
-
-- Clasificación binaria (una vs múltiples neoplasias)
-- Clasificación multietiqueta mediante un enfoque en cascada
-- Explicación de predicciones mediante LIME
-
-La aplicación permite introducir texto clínico o subir archivos para obtener predicciones.
-
----
-
-##  Estructura del proyecto
+## Estructura del proyecto
 
 NeoplasiaClassifier-ES/
 ├── app/
-│ ├── main.py
-│ ├── inference.py
-│ ├── lime_utils.py
-│ ├── templates/
-│ └── static/
-├── models/ # Carpeta donde deben colocarse los modelos (no incluidos)
-├── scripts/ # Scripts auxiliares de experimentación (no necesarios para la app)
-├── config_app.yaml
-├── requirements.txt
+├── models/
+├── script/
 └── README.md
 
+## Instalación rápida
 
----
+1. Crear entorno virtual.
+2. Instalar dependencias:
 
-##  Requisitos
+pip install -r app/requirements.txt
 
-Instalar dependencias:
-pip install -r requirements.txt
+3. Copiar los modelos en la carpeta `models/`.
 
+## Ejecución
 
----
+cd app
 
-##  Ejecución
+python -m uvicorn main:app --reload
 
-Ejecutar la aplicación:
-uvicorn app.main:app --reload
+## Modelos
 
-Abrir en el navegador:
-http://127.0.0.1:8000
+Los modelos entrenados no se incluyen en el repositorio debido a su tamaño.
 
+La estructura esperada es:
 
----
-
-##  Modelos
-
- **Los modelos no se incluyen en el repositorio debido a su tamaño (~500MB / 1Gb cada uno).**
-
-Deben colocarse manualmente en la carpeta `models/` con la siguiente estructura:
 models/
 ├── binario/
 ├── mama/
 └── resto/
 
+Las rutas ya se encuentran configuradas mediante rutas relativas en `app/config_app.yaml`.
 
-Las rutas de los modelos se configuran en el archivo `config_app.yaml`.
+## Documentación
 
----
+La guía completa de instalación, configuración y uso se encuentra en:
 
-##  Explicabilidad (LIME)
+- Manual de Instalación y Uso.pdf
 
-La aplicación permite generar explicaciones de las predicciones mediante LIME:
+## Autor
 
-- Identifica las palabras que más influyen en la predicción
-- Permite interpretar el comportamiento del modelo
+Juan Jesús Rus Muñoz
 
- La generación de explicaciones es computacionalmente costosa y puede tardar varios segundos.
-
-Por este motivo, su uso es opcional en la interfaz.
-
----
-
-##  Limitaciones
-
-- Sensibilidad a estructuras de negación en el texto clínico
-- Posibles sesgos derivados del dataset de entrenamiento
-- Tiempo de respuesta elevado al utilizar LIME
-- Tamaño elevado de los modelos
-
----
-
-##  Aplicación potencial
-
-El sistema se plantea como un prototipo de apoyo a la decisión clínica.
-
-Para su integración en entornos hospitalarios reales sería necesario:
-
-- Validación clínica del modelo
-- Integración con sistemas de historia clínica electrónica
-- Cumplimiento de normativas de protección de datos
-
----
-
-##  Notas
-
-- La aplicación está diseñada para ejecutarse en entorno local
-- Los modelos se cargan en memoria al iniciar la aplicación
-- La carpeta `scripts/` contiene utilidades de desarrollo y no es necesaria para el uso de la aplicación
+Trabajo Fin de Grado – Universidad de Málaga
