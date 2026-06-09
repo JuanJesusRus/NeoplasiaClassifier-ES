@@ -1,6 +1,3 @@
-# ============================================================
-# neoplasia_train.py  
-# ============================================================
 import random
 import argparse
 import logging
@@ -31,7 +28,6 @@ def set_global_seed(seed: int):
     torch.use_deterministic_algorithms(False)
 
 
-# ------------------------------- logging -------------------------------
 def setup_logging(out_dir: str):
     os.makedirs(out_dir, exist_ok=True)
     log_path = Path(out_dir) / "run.log"
@@ -109,7 +105,6 @@ def prepare_data(cfg) :
     return df_trainval, df_test, dataset_trainval, tokenizer
 
 
-# -------------------------- evaluación test ----------------------------
 def evaluar_en_test(model_path: str,
                     test_df: pd.DataFrame,
                     out_dir: Path,
@@ -137,7 +132,6 @@ def evaluar_en_test(model_path: str,
             preds_batch = torch.argmax(logits, 1)
             labels_batch = batch["label"].numpy()
 
-            # ---------- logging de errores ----------
             for p, y, prob in zip(preds_batch, labels_batch, probs_batch):
                 if p != y:
                     # texto original correspondiente a este índice global
@@ -147,7 +141,6 @@ def evaluar_en_test(model_path: str,
                         idx_global, int(p), int(y), float(prob), texto_orig.replace("\n", " ")[:300]
                     )
                 idx_global += 1
-            # ----------------------------------------
 
 
 
@@ -354,7 +347,7 @@ def run_simple(cfg):
             total_loss += out.loss.item()
         avg_loss = total_loss / len(train_loader)
 
-        # validación
+        
         model.eval(); preds, labs = [], []
         with torch.no_grad():
             for batch in val_loader:
@@ -377,7 +370,6 @@ def run_simple(cfg):
                 logging.info(">> Early-stopping en epoch %d", epoch+1)
                 break
 
-    # test
     evaluar_en_test(out_dir,
                     df_test,
                     out_dir / "test_final",

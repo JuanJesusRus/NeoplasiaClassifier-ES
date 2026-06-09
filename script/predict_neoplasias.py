@@ -10,7 +10,6 @@ from sklearn.metrics import (
 )
 import matplotlib.pyplot as plt
 from safetensors.torch import load_file
-# Configuración
 config = {
     "ruta_csv": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\datos\test_set_completo_cambiado.csv",  # conjunto a usar
     "columna_texto": "TEXTO",
@@ -22,32 +21,25 @@ config = {
     "device": "cuda" if torch.cuda.is_available() else "cpu"
 }
 
-# 1. Cargar tokenizer y modelo
 tokenizer = AutoTokenizer.from_pretrained(config["ruta_modelo"])
 
-# Cargar config y modelo sin pesos
 config_modelo = AutoConfig.from_pretrained(config["ruta_modelo"])
 model = AutoModelForSequenceClassification.from_config(config_modelo)
 
-# Cargar pesos desde safetensors
 state_dict = load_file(config["archivo_pesos"])
 model.load_state_dict(state_dict)
 
-# Enviar a dispositivo
 model.to(config["device"])
 model.eval()
-# 2. Cargar CSV como Dataset
 df = pd.read_csv(config["ruta_csv"], sep=";", quotechar='"', engine="python")
 dataset = Dataset.from_pandas(df)
 
-# 3. Tokenización
 def preprocess(example):
     return tokenizer(example[config["columna_texto"]], truncation=True, padding="max_length", max_length=config["max_length"])
 
 tokenized_dataset = dataset.map(preprocess, batched=True)
 tokenized_dataset.set_format(type="torch", columns=["input_ids", "attention_mask", config["columna_etiqueta"]])
 
-# 4. Evaluación
 loader = DataLoader(tokenized_dataset, batch_size=config["batch_size"])
 all_preds, all_probs, all_labels = [], [], []
 
@@ -66,7 +58,6 @@ with torch.no_grad():
         all_probs.extend(probs[:, 1].cpu().tolist())  # probabilidad clase 1
         all_labels.extend(labels.cpu().tolist())
 
-# 5. Métricas con sklearn
 out_dir = Path(r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\comparacionTestNuevos")
 acc = accuracy_score(all_labels, all_preds)
 f1 = f1_score(all_labels, all_preds)

@@ -12,9 +12,7 @@ import matplotlib.pyplot as plt
 import os
 from tqdm import tqdm
 
-# ──────────────────────────────────────────────────────────────
-# CONFIGURACIÓN GENERAL
-# ──────────────────────────────────────────────────────────────
+
 device = torch.device("cpu")
 output_dir = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/roberta3optuna"
 os.makedirs(output_dir, exist_ok=True)
@@ -26,9 +24,7 @@ batch_size = 16
 max_epochs = 20
 early_stopping_patience = 3
 
-# ──────────────────────────────────────────────────────────────
-# CARGAR DATOS Y CREAR DATASETS
-# ──────────────────────────────────────────────────────────────
+
 df = pd.read_csv(ruta_csv)
 df = df.rename(columns={"TEXTO": "texto", "MULTIPLES": "label"})
 
@@ -120,9 +116,7 @@ study = optuna.create_study(direction="maximize")
 study.optimize(objective, n_trials=10)
 best_params = study.best_params
 
-# ──────────────────────────────────────────────────────────────
-# ENTRENAMIENTO FINAL CON MEJORES HIPERPARÁMETROS
-# ──────────────────────────────────────────────────────────────
+
 model = AutoModelForSequenceClassification.from_pretrained(modelo_path, num_labels=2).to(device)
 optimizer = optim.AdamW(model.parameters(), lr=best_params["learning_rate"], weight_decay=best_params["weight_decay"])
 criterion = nn.CrossEntropyLoss()
@@ -208,7 +202,6 @@ with open(f"{output_dir}/metricas.txt", "a") as f:
     f.write("Matriz de Confusión - TEST FINAL:\n")
     f.write(str(cm) + "\n")
 
-# Matriz de confusión como imagen con números
 plt.figure(figsize=(5, 5))
 plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
 plt.title("Matriz de Confusión - TEST")
@@ -228,5 +221,5 @@ plt.tight_layout()
 plt.savefig(f"{output_dir}/matriz_confusion.png")
 plt.close()
 
-print("✅ Entrenamiento finalizado. Resultados y modelo guardados.")
+print(" Entrenamiento finalizado. Resultados y modelo guardados.")
 

@@ -42,20 +42,21 @@ El entorno software necesario está formado por:
 - Python instalado y accesible desde terminal.
 - `pip`, gestor de paquetes de Python.
 - Código fuente del proyecto.
-- Modelos entrenados ubicados en las rutas configuradas en `config_app.yaml`.
+- Modelos entrenados descargados desde el enlace de Drive facilitado y ubicados en las rutas configuradas en `config_app.yaml`.
 
 Las dependencias Python reales declaradas por la aplicación son las siguientes:
 
 ```txt
-fastapi
-uvicorn
-pydantic
-transformers
-torch
-pyyaml
-jinja2
-python-multipart
-lime
+fastapi==0.125.0
+starlette==0.50.0
+uvicorn==0.38.0
+pydantic==2.10.2
+transformers==4.50.0
+torch==2.4.1
+pyyaml==6.0.2
+jinja2==3.1.6
+python-multipart==0.0.21
+lime==0.2.0.1
 sentencepiece
 ```
 
@@ -88,8 +89,8 @@ NeoplasiaClassifier-ES/
 |-- models/
 |   `-- README.md
 |
-|
 |-- script/
+|   `-- README.md
 |
 `-- README.md
 ```
@@ -104,9 +105,9 @@ La carpeta `app/` contiene los componentes necesarios para ejecutar la interfaz 
 - `templates/`: contiene la plantilla HTML de la interfaz.
 - `static/`: contiene los estilos CSS de la interfaz.
 
-La carpeta `models/` se reserva para alojar los modelos dentro del propio repositorio. En la configuración actual, `app/config_app.yaml` utiliza rutas relativas desde la carpeta `app/` hacia `../models/`.
+La carpeta `models/` se entrega sin los modelos entrenados, ya que los archivos de pesos ocupan demasiado espacio para incluirlos en el repositorio. En su lugar, contiene un `README.md` con las instrucciones y el enlace de Drive desde el que deben descargarse. Una vez descargados, los modelos deben colocarse en esta carpeta respetando la estructura esperada por `app/config_app.yaml`.
 
-La carpeta `script/` agrupa utilidades auxiliares de entrenamiento, evaluación y análisis. No es necesaria para ejecutar la aplicación web de inferencia.
+La carpeta `script/` agrupa utilidades auxiliares de entrenamiento, evaluación y análisis. No es necesaria para ejecutar la aplicación web de inferencia e incluye su propio `README.md`, donde se diferencian los scripts principales de los scripts históricos u obsoletos.
 
 ---
 
@@ -203,7 +204,7 @@ Las dependencias de ejecución de la aplicación se encuentran en `app/requireme
 python -m pip install -r app\requirements.txt
 ```
 
-El archivo de dependencias incluye FastAPI para el servidor web, Uvicorn para ejecutar la aplicación ASGI, Transformers y Torch para cargar y ejecutar los modelos, PyYAML para leer la configuración, Jinja2 para renderizar la interfaz, Python Multipart para procesar formularios y archivos, LIME para explicabilidad y SentencePiece para compatibilidad con tokenizadores utilizados por Transformers.
+El archivo de dependencias fija versiones concretas para mejorar la reproducibilidad del entorno. Incluye FastAPI y Starlette para la aplicación web, Uvicorn para ejecutar la aplicación ASGI, Pydantic para validación interna, Transformers y Torch para cargar y ejecutar los modelos, PyYAML para leer la configuración, Jinja2 para renderizar la interfaz, Python Multipart para procesar formularios y archivos, LIME para explicabilidad y SentencePiece para compatibilidad con tokenizadores utilizados por Transformers.
 
 ### 4.7. Comprobación de dependencias instaladas
 
@@ -260,7 +261,21 @@ models/
     `-- label2idx.json
 ```
 
-### 5.1. Sección modelo
+### 5.1. Descarga y colocación de los modelos
+
+Los modelos entrenados no se incluyen en el repositorio porque ocupan demasiado espacio. Para ejecutar la aplicación, deben descargarse previamente desde el enlace de Drive facilitado junto con el proyecto.
+
+Enlace de descarga de los modelos:
+
+```txt
+https://drive.google.com/file/d/1wLKNNolqbJa934kWXcT2a4e1VP2GGELT/view?usp=sharing
+```
+
+Una vez descargados, descomprima o copie los modelos dentro de la carpeta `models/` respetando la estructura indicada anteriormente. Es importante mantener los nombres de carpeta esperados por `app/config_app.yaml`, ya que la aplicación carga los modelos desde esas rutas relativas.
+
+Si se cambia la ubicación o el nombre de alguna carpeta, será necesario actualizar las rutas correspondientes en `app/config_app.yaml`.
+
+### 5.2. Sección modelo
 
 La sección `modelo` corresponde al clasificador binario:
 
@@ -270,7 +285,7 @@ La sección `modelo` corresponde al clasificador binario:
 
 El valor de `max_length` determina el tamaño máximo de secuencia empleado por el tokenizador antes de pasar el texto al modelo.
 
-### 5.2. Sección cascade
+### 5.3. Sección cascade
 
 La sección `cascade` configura la clasificación multietiqueta:
 
@@ -283,7 +298,7 @@ La sección `cascade` configura la clasificación multietiqueta:
 
 Los modelos multietiqueta devuelven probabilidades independientes por etiqueta. Las etiquetas cuya probabilidad supera el umbral configurado se muestran como predicciones activas.
 
-### 5.3. Sección api
+### 5.4. Sección api
 
 La sección `api` contiene metadatos de la aplicación:
 

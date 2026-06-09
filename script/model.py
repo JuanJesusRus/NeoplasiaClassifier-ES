@@ -12,9 +12,7 @@ import matplotlib.pyplot as plt
 import os
 from tqdm import tqdm
 
-# ──────────────────────────────────────────────────────────────
-# CONFIGURACIÓN INICIAL
-# ──────────────────────────────────────────────────────────────
+
 device = torch.device("cpu")
 
 output_dir = "C:/Users/jesus/OneDrive - Universidad de Málaga/Cuarto/TFG/NeoplasiaClassifier-ES/output/roberta/roberta3"
@@ -27,18 +25,14 @@ epochs = 15
 max_len = 512
 early_stopping_patience = 5
 
-# ──────────────────────────────────────────────────────────────
-# CARGAR DATOS Y DIVIDIR EN TRAIN / VAL / TEST
-# ──────────────────────────────────────────────────────────────
+
 df = pd.read_csv(ruta_csv)
 df = df.rename(columns={"TEXTO": "texto", "MULTIPLES": "label"})
 
 df_train, df_temp = train_test_split(df, test_size=0.3, stratify=df["label"], random_state=42)
 df_val, df_test = train_test_split(df_temp, test_size=0.5, stratify=df_temp["label"], random_state=42)
 
-# ──────────────────────────────────────────────────────────────
-# DATASET PERSONALIZADO
-# ──────────────────────────────────────────────────────────────
+
 tokenizer = AutoTokenizer.from_pretrained(modelo_path)
 
 class NeoplasiaDataset(Dataset):
@@ -66,7 +60,6 @@ class NeoplasiaDataset(Dataset):
             "label": torch.tensor(label, dtype=torch.long)
         }
 
-# Dataloaders
 train_dataset = NeoplasiaDataset(df_train, tokenizer, max_len)
 val_dataset = NeoplasiaDataset(df_val, tokenizer, max_len)
 test_dataset = NeoplasiaDataset(df_test, tokenizer, max_len)
@@ -75,16 +68,13 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=batch_size)
 test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
-# ──────────────────────────────────────────────────────────────
-# MODELO Y ENTRENAMIENTO
-# ──────────────────────────────────────────────────────────────
+
 model = AutoModelForSequenceClassification.from_pretrained(modelo_path, num_labels=2)
 model.to(device)
 
 optimizer = optim.AdamW(model.parameters(), lr=2e-5)
 criterion = nn.CrossEntropyLoss()
 
-# Archivo para guardar métricas por época
 with open(f"{output_dir}/metricas.txt", "w") as f:
     f.write("Época\tTrain Loss\tVal Accuracy\tVal F1\n")
 
@@ -129,10 +119,9 @@ for epoch in range(epochs):
 
     val_acc = accuracy_score(val_labels, val_preds)
     val_f1 = f1_score(val_labels, val_preds)
-    val_loss /= len(val_loader)  # ← Añade esta línea antes de comparar con best_val_loss
+    val_loss /= len(val_loader)  
 
 
-    # Guardar métricas de la época
     with open(f"{output_dir}/metricas.txt", "a") as f:
         f.write(f"{epoch+1}\t{avg_train_loss:.4f}\t{val_acc:.4f}\t{val_f1:.4f}\n")
 
@@ -188,8 +177,7 @@ tick_marks = np.arange(2)
 plt.xticks(tick_marks, ["Una neoplasia", "Múltiples"], rotation=45)
 plt.yticks(tick_marks, ["Una neoplasia", "Múltiples"])
 
-# Plotear Confussion Matrix
-# Añadir los números dentro de cada celda
+
 thresh = cm.max() / 2
 for i in range(cm.shape[0]):
     for j in range(cm.shape[1]):
@@ -203,10 +191,8 @@ plt.tight_layout()
 plt.savefig(f"{output_dir}/img/matriz_confusion.png")
 plt.close()
 
-# ──────────────────────────────────────────────────────────────
-# GUARDAR MODELO
-# ──────────────────────────────────────────────────────────────
+
 model.save_pretrained(f"{output_dir}")
 tokenizer.save_pretrained(f"{output_dir}")
-print(f"✅ Modelo guardado en: {output_dir}")
+print(f" Modelo guardado en: {output_dir}")
 

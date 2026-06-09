@@ -9,7 +9,6 @@ import json
 try:
     from script.train_multilabel import normalize_token_to_canonical, normalize_token_variations
 except Exception:
-    # Fallback: define minimal passthroughs
     def normalize_token_variations(x):
         return x
     def normalize_token_to_canonical(token, reverse_syn_map, canonical_set, case_sensitive=True):
@@ -34,9 +33,8 @@ PATH_RESTO_LABELS = "C:\\Users\\jesus\\OneDrive - Universidad de Málaga\\Cuarto
 CSV_TEST = "output/comparacionModelos/datos/test_set_completo_cambiado.csv"
 OUTPUT_FILE = "output/multilabel_cascade/resultados_cascada.csv"
 
-# === UMBRALES DE DECISIÓN ===
 UMBRAL_MAMA = 0.5  
-UMBRAL_RESTO = 0.5 # Umbral bajo para recuperar Sarcomas/Endometrios
+UMBRAL_RESTO = 0.5 
 
 def obtener_etiquetas_reales(csv_path):
     """Obtiene etiquetas reales si existen en el CSV."""
@@ -59,7 +57,6 @@ def calcular_metricas(y_true_list, predicciones_list, todas_etiquetas, threshold
     Returns:
         dict con métricas (macro_f1, macro_auc, per_label, etc)
     """
-    # Convertir strings a matrices one-hot
     label2idx = {label: i for i, label in enumerate(todas_etiquetas)}
     
     y_true = np.zeros((len(y_true_list), len(todas_etiquetas)))
@@ -72,17 +69,14 @@ def calcular_metricas(y_true_list, predicciones_list, todas_etiquetas, threshold
                 if label in label2idx:
                     y_true[i, label2idx[label]] = 1
     
-    # Usar probabilidades del modelo cascada
     for i, probs in enumerate(predicciones_list):
         y_prob[i, :] = probs
     
     y_pred = (y_prob >= threshold).astype(int)
     
-    # Calcular métricas
     per_label = precision_recall_fscore_support(y_true, y_pred, average=None, zero_division=0)
     macro_f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
     
-    # AUC por etiqueta
     aucs = []
     for i in range(y_true.shape[1]):
         if y_true[:, i].sum() > 0 and y_true[:, i].sum() < len(y_true):
@@ -133,15 +127,12 @@ def cargar_label_map(path):
     label2idx_path = os.path.join(path, "label2idx.json")
     if os.path.exists(label2idx_path):
         try:
-            # Intentar UTF-8 primero
             with open(label2idx_path, 'r', encoding='utf-8') as f:
                 label2idx = json.load(f)
         except UnicodeDecodeError:
-            # Si falla, usar Latin-1
             with open(label2idx_path, 'r', encoding='latin-1') as f:
                 label2idx = json.load(f)
         
-        # Invertir: label2idx -> idx2label
         idx2label = {int(v): k for k, v in label2idx.items()}
         print(f"   Cargadas {len(idx2label)} etiquetas desde {label2idx_path}")
         return idx2label
@@ -168,11 +159,10 @@ def predecir(texto, tokenizer, model, id2label_correct, threshold):
     
     probs = torch.sigmoid(outputs.logits).detach().cpu().numpy()[0]
     
-    predicciones = {}  # Diccionario con etiqueta -> probabilidad
+    predicciones = {}  
     
     for idx, prob in enumerate(probs):
         if prob >= threshold:
-            # Usar el mapeo correcto de nombres
             if idx in id2label_correct:
                 etiqueta = id2label_correct[idx]
                 predicciones[etiqueta] = float(prob)
@@ -185,17 +175,14 @@ def predecir(texto, tokenizer, model, id2label_correct, threshold):
 def main():
     print("--- INICIANDO PREDICCIÓN EN CASCADA ---")
     
-    # 1. Cargar los dos "cerebros"
     print("1. Cargando modelos...")
     tok_mama, mod_mama = cargar_modelo(PATH_MAMA_MODEL)
     tok_resto, mod_resto = cargar_modelo(PATH_RESTO_MODEL)
     
-    # Cargar los mapeos correctos de etiquetas desde label2idx.json
     print("   Cargando mapeos de etiquetas...")
     id2label_mama = cargar_label_map(PATH_MAMA_LABELS)
     id2label_resto = cargar_label_map(PATH_RESTO_LABELS)
 
-    # Cargar synonyms_map para normalizar etiquetas reales
     reverse_syn_map = {}
     syn_path = os.path.join(PATH_RESTO_LABELS, "synonyms_map.json")
     if os.path.exists(syn_path):
@@ -210,17 +197,13 @@ def main():
             reverse_syn_map[canon.lower()] = canon
             for s in syns:
                 reverse_syn_map[s.lower()] = canon
-        # also ensure canonical names map to themselves (case-insensitive)
         for v in list(id2label_resto.values()) + list(id2label_mama.values()):
             reverse_syn_map[str(v).lower()] = v
     
-    # Obtener todas las etiquetas posibles de ambos modelos
     todas_etiquetas_mama = list(id2label_mama.values())
     todas_etiquetas_resto = list(id2label_resto.values())
     
-    # Construir lista: primero Mama, luego el resto (en orden original del modelo resto)
     todas_etiquetas = todas_etiquetas_mama.copy()  # Empezar con Mama
-    # Agregar etiquetas del resto que no estén ya
     for etiqueta in todas_etiquetas_resto:
         if etiqueta not in todas_etiquetas:
             todas_etiquetas.append(etiqueta)
@@ -229,7 +212,6 @@ def main():
     print(f"   Etiquetas Resto ({len(todas_etiquetas_resto)}): {todas_etiquetas_resto[:5]}... ({len(todas_etiquetas_resto)} total)")
     print(f"   Orden final ({len(todas_etiquetas)}): Mama primero, luego resto")
     
-    # 2. Leer datos de prueba
     if not os.path.exists(CSV_TEST):
         print(f"ERROR: No encuentro el CSV de test en {CSV_TEST}")
         exit()
@@ -244,7 +226,7 @@ def main():
     
     predicciones_finales = []
     probabilidades_finales = []
-    todas_probs_cascada = []  # Para calcular métricas
+    todas_probs_cascada = []  
     
     print(f"3. Procesando {len(df)} pacientes...")
     print(f"   - Umbral Mama: {UMBRAL_MAMA}")
@@ -254,11 +236,9 @@ def main():
     for i, row in tqdm(df.iterrows(), total=len(df)):
         texto = row["TEXTO"]
         
-        # --- PASO A: El Portero (¿Es Mama?) ---
         result_a = predecir(texto, tok_mama, mod_mama, id2label_mama, threshold=UMBRAL_MAMA)
         preds_a = result_a['predicciones']
         
-        # --- PASO B: El Especialista (¿Es otra cosa?) ---
         result_b = predecir(texto, tok_resto, mod_resto, id2label_resto, threshold=UMBRAL_RESTO)
         preds_b = result_b['predicciones']
         
@@ -267,15 +247,13 @@ def main():
         # Basarse en NOMBRES de etiquetas, no en índices locales
         probs_cascada = np.zeros(len(todas_etiquetas))
         for etiqueta_idx, etiqueta in enumerate(todas_etiquetas):
-            # Tomar probabilidad máxima de ambos modelos para esta etiqueta
             if etiqueta in preds_a:
                 probs_cascada[etiqueta_idx] = max(probs_cascada[etiqueta_idx], preds_a[etiqueta])
             if etiqueta in preds_b:
                 probs_cascada[etiqueta_idx] = max(probs_cascada[etiqueta_idx], preds_b[etiqueta])
         todas_probs_cascada.append(probs_cascada)
         
-        # Crear string de etiquetas y probabilidades ordenadas
-        total_preds = {**preds_a, **preds_b}  # Mezcla probabilidades de ambos modelos
+        total_preds = {**preds_a, **preds_b}  
         
         etiquetas_ordenadas = sorted(total_preds.keys())
         if not etiquetas_ordenadas:
@@ -288,13 +266,11 @@ def main():
         predicciones_finales.append(res_str)
         probabilidades_finales.append(prob_str)
 
-    # 4. Guardar resultados (solo columnas: NEOPLASIAS, PREDICCION_CASCADA, PROBABILIDADES)
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     
     df["PREDICCION_CASCADA"] = predicciones_finales
     df["PROBABILIDADES"] = probabilidades_finales
 
-    # Construir dataframe de salida con solo la(s) columna(s) relevantes
     keep_cols = []
     if "NEOPLASIAS" in df.columns:
         keep_cols.append("NEOPLASIAS")
@@ -306,7 +282,6 @@ def main():
     if keep_cols:
         df_out = df[keep_cols]
     else:
-        # Fallback: al menos guardar predicción y probabilidades
         df_out = pd.DataFrame({
             "PREDICCION_CASCADA": predicciones_finales,
             "PROBABILIDADES": probabilidades_finales
@@ -314,7 +289,6 @@ def main():
 
     df_out.to_csv(OUTPUT_FILE, index=False, sep=";")
     
-    # 5. Calcular métricas si existen etiquetas reales
     etiquetas_reales = None
     if "LABELS" in df.columns:
         etiquetas_reales = df["LABELS"].tolist()
@@ -326,7 +300,6 @@ def main():
     if etiquetas_reales:
         print("\n4. Calculando métricas con respecto a etiquetas reales...")
         
-        # Convertir formato Python ['label1', 'label2'] a list y normalizar con synonyms
         etiquetas_reales_procesadas = []
         import ast
         for item in etiquetas_reales:
@@ -347,16 +320,13 @@ def main():
             else:
                 parts = [str(item)]
 
-            # Normalizar cada token a la etiqueta canónica usando reverse_syn_map + funciones importadas
             canons = []
             for p in parts:
                 canon = normalize_token_to_canonical(p, reverse_syn_map, set(todas_etiquetas), case_sensitive=False)
                 if canon:
                     canons.append(canon)
                 else:
-                    # aplicar variaciones y fallback al original
                     npart = normalize_token_variations(p)
-                    # intentar match case-insensitive con todas_etiquetas
                     matched = None
                     for c in todas_etiquetas:
                         if npart.lower() == str(c).lower():
@@ -365,14 +335,12 @@ def main():
                     if matched:
                         canons.append(matched)
                     else:
-                        # si no se normaliza, añadir el original bruto
                         canons.append(p)
 
             etiquetas_reales_procesadas.append(";".join(canons))
 
         metricas = calcular_metricas(etiquetas_reales_procesadas, todas_probs_cascada, todas_etiquetas, threshold=UMBRAL_RESTO)
         
-        # Agregar diccionarios etiqueta -> métrica para mejor legibilidad
         metricas_por_etiqueta = {}
         for j, etiqueta in enumerate(todas_etiquetas):
             metricas_por_etiqueta[etiqueta] = {
@@ -385,7 +353,6 @@ def main():
         
         metricas['por_etiqueta'] = metricas_por_etiqueta
         
-        # Guardar métricas en JSON
         metricas_file = OUTPUT_FILE.replace(".csv", "_metricas.json")
         with open(metricas_file, "w", encoding="utf-8") as f:
             json.dump(metricas, f, ensure_ascii=False, indent=2)
@@ -396,7 +363,7 @@ def main():
     else:
         print("\n4. No se encontraron etiquetas reales en el CSV. Saltar cálculo de métricas.")
     
-    print(f"\n¡ÉXITO! Resultados guardados en: {OUTPUT_FILE}")
+    print(f"\nResultados guardados en: {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     main()

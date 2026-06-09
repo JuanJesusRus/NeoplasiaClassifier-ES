@@ -23,7 +23,6 @@ def cargar_colecciones2(path_archivo):
         exec(f.read(), {}, namespace)
     
     colecciones = namespace["colecciones"]
-    # Normalizar todos los términos en la colección
     colecciones_normalizadas = {neo: [normalizar(termino) for termino in terminos] 
                                  for neo, terminos in colecciones.items()}
     return colecciones_normalizadas
@@ -128,7 +127,6 @@ def evaluar_flexible(df, output_folder):
     También guarda resumen por tipo de paciente en el mismo TXT de métricas.
     """
 
-    # Determinar si hay al menos un acierto (intersección no vacía entre reales y predichas)
     df["acierto_flexible"] = df.apply(
         lambda fila: int(bool({normalizar(neo) for neo in parse_neoplasias(fila["NEOPLASIAS"])}.intersection({normalizar(neo) for neo in fila["neoplasias_nuevas"]}))),
         axis=1
@@ -136,11 +134,9 @@ def evaluar_flexible(df, output_folder):
 
     
 
-    # Crear carpeta si no existe
     os.makedirs(output_folder, exist_ok=True)
 
     
-    # Resumen por tipo
     resumen = df.groupby("MULTIPLES")["acierto_flexible"].agg(
         total="count",
         aciertos="sum",
@@ -148,7 +144,6 @@ def evaluar_flexible(df, output_folder):
         errores=lambda x: (1 - x).sum()
     ).reset_index()
 
-    # Guardar métricas + resumen en un único archivo
     with open(os.path.join(output_folder, "metricas_flexibles.txt"), "w") as f:
         f.write(f"""Evaluación flexible (al menos una neoplasia correcta):
            Aciertos totales: {df["acierto_flexible"].sum()} de {len(df)} , porcentaje: {df["acierto_flexible"].sum() / len(df) * 100:.2f}%
@@ -170,12 +165,10 @@ def es_acierto_estricto(fila):
     reales = parse_neoplasias(fila["NEOPLASIAS"])
     predichas = fila.get("neoplasias_nuevas", []) or []
     
-    # Remover duplicados de reales y normalizar
     reales_unicos = list(set(reales))
     reales_normalizados = {normalizar(neo) for neo in reales_unicos}
     predichas_normalizados = {normalizar(neo) for neo in predichas}
     
-    # Todas las neoplasias únicas reales deben estar en la predicción
     return int(all(neo in predichas_normalizados for neo in reales_normalizados))
 
 
@@ -193,10 +186,8 @@ def evaluar_estricto(df, output_folder):
     
     df["acierto_estricto"] = df.apply(es_acierto_estricto, axis=1)
     
-    # Crear carpeta si no existe
     os.makedirs(output_folder, exist_ok=True)
     
-    # Resumen por tipo
     resumen = df.groupby("MULTIPLES")["acierto_estricto"].agg(
         total="count",
         aciertos="sum",
@@ -204,7 +195,6 @@ def evaluar_estricto(df, output_folder):
         errores=lambda x: (1 - x).sum()
     ).reset_index()
     
-    # Guardar métricas + resumen en un único archivo
     with open(os.path.join(output_folder, "metricas_estrictas.txt"), "w") as f:
         f.write(f"""Evaluación estricta (debe acertar TODAS las neoplasias reales):
             Aciertos totales: {df["acierto_estricto"].sum()} de {len(df)}, porcentaje: {df["acierto_estricto"].sum() / len(df) * 100:.2f}%
@@ -214,7 +204,6 @@ def evaluar_estricto(df, output_folder):
         for _, row in resumen.iterrows():
             f.write(f"- {row['MULTIPLES']}: total={row['total']}, aciertos={row['aciertos']}, errores={row['errores']}, porcentaje={row['porcentaje']:.2f}%\n")
     
-    # Guardar fallos
     df_errores = df[df["acierto_estricto"] == 0]
     df_errores.to_csv(os.path.join(output_folder, "fallos_estrictos.csv"), index=False)
 

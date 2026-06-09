@@ -9,9 +9,7 @@ from pathlib import Path
 from tqdm import tqdm
 import ast
 
-# -------------------------------
-# Configuración general
-# -------------------------------
+
 config = {
     "ruta_csv": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\datos\test_set_completo_cambiado.csv",
     "columna_texto": "TEXTO",
@@ -23,7 +21,6 @@ config = {
     "out_dir": Path(r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\comparacionTestCompletos")
 }
 
-# Lista de modelos a evaluar
 modelos = [
     {
         "nombre": "xlm_roberta_1",
@@ -75,9 +72,7 @@ def clave_ordenada(comb_str):
     except Exception:
         return ()
     
-# -------------------------------
-# Función de evaluación
-# -------------------------------
+
 
 def evaluar_modelo(modelo_info, df_base):
     print(f"\n Evaluando modelo: {modelo_info['nombre']}")
@@ -156,9 +151,7 @@ def evaluar_modelo(modelo_info, df_base):
     print(f" Métricas de múltiples neoplasias guardadas en: {salida_csv.name}")
 
 
-# -------------------------------
-# EJECUTAR PARA TODOS LOS MODELOS
-# -------------------------------
+
 df_test = pd.read_csv(config["ruta_csv"], sep=";", quotechar='"', engine="python")
 for modelo in modelos:
     evaluar_modelo(modelo, df_test)

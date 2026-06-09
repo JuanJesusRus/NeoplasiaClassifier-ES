@@ -6,8 +6,8 @@ import os
 # Configuración
 config = {
     "ruta_csv": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\Multiples_neoplasias_solo_resumenes_selection\textos_cortos_filtrados.csv",  # <-- cámbialo por la ruta a tu CSV
-    "columna_texto": "TEXTO",  # <-- cámbialo
-    "columna_etiqueta": "MULTIPLES",  # <-- cámbialo
+    "columna_texto": "TEXTO",  
+    "columna_etiqueta": "MULTIPLES",  
     "test_size": 0.2,
     "random_state": 42,
     "ruta_salida": r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\datos"  # <-- carpeta donde guardar los CSVs

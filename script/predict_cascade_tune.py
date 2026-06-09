@@ -430,9 +430,7 @@ def metrics_like_predict_cascade(
     return out
 
 
-# -----------------------------
-# Output formatting (CSV like old)
-# -----------------------------
+
 def format_predictions_strings(
     y_prob: np.ndarray,
     y_pred: np.ndarray,
@@ -467,9 +465,7 @@ def format_predictions_strings(
     return pred_strs, prob_strs
 
 
-# -----------------------------
-# Selection logic
-# -----------------------------
+
 def pick_best(
     candidates: List[Dict[str, Any]],
     select_metric: str,
@@ -496,9 +492,7 @@ def pick_best(
     return best
 
 
-# -----------------------------
-# Config + CLI
-# -----------------------------
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", type=str, required=True, help="YAML de configuración")
@@ -526,9 +520,7 @@ def merge_cfg(cfg: Dict[str, Any], args: argparse.Namespace) -> Dict[str, Any]:
     return cfg
 
 
-# -----------------------------
-# Main
-# -----------------------------
+
 def main():
     args = build_parser().parse_args()
     cfg = load_yaml(args.config)
@@ -569,7 +561,6 @@ def main():
 
     os.makedirs(outdir, exist_ok=True)
 
-    # Load data
     df = pd.read_csv(csv_path, sep=sep)
     if text_col not in df.columns:
         raise ValueError(f"No existe columna {text_col} en {csv_path}")
@@ -577,31 +568,25 @@ def main():
         raise ValueError(f"No existe columna {labels_col} en {csv_path}")
     texts = df[text_col].astype(str).tolist()
 
-    # Label space
     all_labels, all_label2idx, _, _, mama_idx2label, resto_idx2label = build_union_labelspace(
         cfg["path_mama_labels"], cfg["path_resto_labels"]
     )
 
-    # Reverse map for normalizing y_true
     reverse_syn_map = load_synonyms_reverse_map(cfg["path_resto_labels"], all_labels)
     canonical_set = set(all_labels)
 
-    # y_true + support (NORMALIZADO)
     y_true = build_y_true(
         df, labels_col, all_label2idx, sep=sep,
         reverse_syn_map=reverse_syn_map, canonical_set=canonical_set
     )
     support = compute_support(y_true)
 
-    # Load models
     tok_mama, mod_mama = load_model(cfg["path_mama_model"], device)
     tok_resto, mod_resto = load_model(cfg["path_resto_model"], device)
 
-    # Inference ONCE (probabilidades completas)
     probs_mama_local = predict_probs_batch(texts, tok_mama, mod_mama, device=device, batch_size=batch_size, max_len=max_len)
     probs_resto_local = predict_probs_batch(texts, tok_resto, mod_resto, device=device, batch_size=batch_size, max_len=max_len)
 
-    # Combine full probs
     y_prob = combine_probs(
         probs_mama_local, probs_resto_local,
         mama_idx2label, resto_idx2label,
@@ -640,12 +625,10 @@ def main():
                         "metrics": metrics,
                     })
 
-        # Save all candidates
         Path(outdir, "metrics_by_threshold.json").write_text(
             json.dumps(candidates, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
-        # Pick best
         best = pick_best(candidates, select_metric=select_metric, max_p90_labels=max_p90_labels)
 
         best_out = {
@@ -666,7 +649,6 @@ def main():
         print(json.dumps(best_out, ensure_ascii=False, indent=2))
 
     elif mode == "test":
-        # Load best thresholds
         best_path = Path(outdir, best_threshold_json)
         if not best_path.exists():
             raise FileNotFoundError(f"No existe {best_path}. Ejecuta primero mode=tune en VALIDACIÓN.")
@@ -693,13 +675,11 @@ def main():
                 mama_label_name=mama_label_name
             )
 
-        # 1) Panel moderno
         metrics = compute_metrics_panel(y_true, y_prob, y_pred)
         Path(outdir, "test_metrics.json").write_text(
             json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
-        # 2) CSV como tu predict_cascade.py
         pred_strs, prob_strs = format_predictions_strings(y_prob, y_pred, all_labels)
         df_out = pd.DataFrame({
             labels_col: df[labels_col].values,
@@ -708,17 +688,16 @@ def main():
         })
         df_out.to_csv(Path(outdir) / "resultados_cascada.csv", index=False, sep=sep)
 
-        # 3) JSON de métricas tipo predict_cascade.py
         old_style = metrics_like_predict_cascade(y_true, y_prob, y_pred, all_labels)
         Path(outdir, "resultados_cascada_metricas.json").write_text(
             json.dumps(old_style, ensure_ascii=False, indent=2),
             encoding="utf-8"
         )
 
-        print("✓ Evaluación en TEST completada")
+        print("Evaluación en TEST completada")
         print(json.dumps(metrics, ensure_ascii=False, indent=2))
-        print(f"✓ Guardado CSV: {Path(outdir) / 'resultados_cascada.csv'}")
-        print(f"✓ Guardado métricas estilo antiguo: {Path(outdir) / 'resultados_cascada_metricas.json'}")
+        print(f"Guardado CSV: {Path(outdir) / 'resultados_cascada.csv'}")
+        print(f" Guardado métricas estilo antiguo: {Path(outdir) / 'resultados_cascada_metricas.json'}")
 
     else:
         raise ValueError("mode debe ser 'tune' o 'test'.")

@@ -1,14 +1,29 @@
 # Modelos
 
-Los modelos no se incluyen en este repositorio debido a su tamaño (~500MB / 1 Gb cada uno).
+Los modelos entrenados no se incluyen en el repositorio debido a su tamano. La carpeta `models/` se entrega solo con este archivo de instrucciones.
 
-Para ejecutar la aplicación correctamente, deben colocarse manualmente en esta carpeta con la siguiente estructura:
+## Descarga
 
+Descargue los modelos desde el siguiente enlace de Drive:
+
+```txt
+https://drive.google.com/file/d/1wLKNNolqbJa934kWXcT2a4e1VP2GGELT/view?usp=sharing
+```
+
+## Estructura esperada
+
+Una vez descargados y descomprimidos, coloque los modelos dentro de esta carpeta respetando la siguiente estructura:
+
+```txt
 models/
-├── binario/
-├── mama/
-└── resto/
+|-- binario/
+|   `-- galen_1/
+|-- mama/
+|   |-- best_model/
+|   `-- label2idx.json
+`-- resto/
+    |-- best_model/
+    `-- label2idx.json
+```
 
-Cada carpeta debe contener los archivos del modelo correspondientes (pesos, tokenizer, configuración, etc.).
-
-Las rutas de los modelos se configuran en el archivo `config_app.yaml`.
+Las rutas ya estan configuradas en `app/config_app.yaml` mediante rutas relativas desde la carpeta `app/`.

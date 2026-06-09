@@ -20,9 +20,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-# -------------------------
-# Dataset
-# -------------------------
+
 
 from train_multilabel import (
     normalize_token_to_canonical,
@@ -155,9 +153,7 @@ class MultilabelDataset(Dataset):
 
 
 
-# -------------------------
-# Evaluación
-# -------------------------
+
 def evaluate(model, loader, device, threshold=0.5):
     model.eval()
     y_true, y_prob = [], []
@@ -229,16 +225,12 @@ def evaluate(model, loader, device, threshold=0.5):
     }
 
 
-# -------------------------
-# Confusion matrices
-# -------------------------
+
 def save_confusion_matrices(y_true, y_pred, labels_list, out_dir):
     save_confusion_matrices_train(y_true, y_pred, labels_list, out_dir)
 
 
-# -------------------------
-# Main
-# -------------------------
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-dir", required=True)
@@ -269,7 +261,6 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     model = AutoModelForSequenceClassification.from_pretrained(model_dir).to(device)
 
-    # Cargar datos
     df = pd.read_csv(args.test_csv, sep=args.sep, encoding="utf-8")
     df.columns = [c.strip() for c in df.columns]
     df = filter_labels_exclude_mama(
@@ -310,7 +301,6 @@ def main():
 
     metrics = evaluate(model, loader, device, args.threshold)
 
-    # Guardar métricas
     with open(out_dir / "test_metrics.json", "w", encoding="utf8") as f:
         json.dump(
             {
@@ -334,7 +324,6 @@ def main():
             indent=4
         )
 
-    # Guardar matrices
     save_confusion_matrices(
         metrics["y_true"],
         metrics["y_pred"],

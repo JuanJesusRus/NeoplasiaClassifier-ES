@@ -36,7 +36,6 @@ from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import matplotlib.pyplot as plt
 
-# Reverse synonyms map (populated at runtime if --labels-file provided)
 reverse_syn_map = {}
 
 
@@ -97,16 +96,13 @@ def parse_collections_file(path: str):
     - synonyms_map: dict[label] -> list(synonyms...]
     """
     text = Path(path).read_text(encoding='utf-8')
-    # Buscar la asignación a 'colecciones' y extraer el diccionario literal
     m = re.search(r"colecciones\s*=\s*\{", text)
     if not m:
         raise ValueError(f"No se encontró 'colecciones = {{...}}' en {path}")
     start = m.start()
-    # Encontrar la llave de apertura
     brace_idx = text.find('{', start)
     if brace_idx == -1:
         raise ValueError("Diccionario no encontrado.")
-    # Extraer bloque hasta llave correspondiente
     depth = 0
     end_idx = None
     for i in range(brace_idx, len(text)):
@@ -126,19 +122,16 @@ def parse_collections_file(path: str):
     except Exception as e:
         raise ValueError(f"Error al evaluar el dict de colecciones: {e}")
 
-    # Normalize keys and synonyms
     labels_list = list(parsed.keys())
     synonyms_map = {k: [s for s in v] for k, v in parsed.items()}
     return labels_list, synonyms_map
 
 
 def build_labels_from_B(df: pd.DataFrame, labels_col: str = "LABELS", sep: str = ";") -> List[str]:
-    # Recolectar todas las etiquetas a partir de la columna labels_col y devolver lista ordenada
     labels = set()
     for raw in df[labels_col].dropna():
         s = str(raw).strip()
         if s.startswith('[') and s.endswith(']'):
-            # formato lista Python: usar ast to parse
             try:
                 parts = ast.literal_eval(s)
             except Exception:
@@ -165,7 +158,6 @@ def normalize_token_variations(token: str) -> str:
     if not t:
         return t
     
-    # Diccionario de reemplazos explícitos (case-insensitive keys, normalized values)
     replacements = {
         "linfomas no hodgkin": "linfoma no hodgkin",
         "linfomas hodgkin": "linfoma hodgkin",
@@ -182,9 +174,7 @@ def normalize_token_variations(token: str) -> str:
     if t_lower in replacements:
         return replacements[t_lower]
     
-    # Si no hay regla explícita, intentar singularizar (quitar -s final si parece plural)
     if t_lower.endswith("s") and len(t) > 3:
-        # Heurística: si termina en "s" y el singular parece válido, usarlo
         singular = t[:-1]
         return singular
     
@@ -203,15 +193,12 @@ def normalize_token_to_canonical(token: str, reverse_syn_map: dict, canonical_se
     if not t:
         return None
     
-    # Primero aplicar normalizaciones de variaciones
     t = normalize_token_variations(t)
     
-    # Exact match with canonical set
     if t in canonical_set:
         return t
 
     if not case_sensitive:
-        # Case-insensitive canonical match
         for c in canonical_set:
             if t.lower() == c.lower():
                 return c
@@ -219,7 +206,6 @@ def normalize_token_to_canonical(token: str, reverse_syn_map: dict, canonical_se
     else:
         key = t
 
-    # Look up in reverse synonym map using the appropriate key
     if key in reverse_syn_map:
         return reverse_syn_map[key]
     return None
@@ -236,14 +222,11 @@ def simulate_case_comparison(df: pd.DataFrame, labels_col: str, labels_list: Lis
     Si output_dir es proporcionado, guarda los resultados en sanity_check_results.txt
     Si no_normalize=True, desactiva las normalizaciones para mostrar resultados sin ellas.
     """
-    # Build reverse maps
     cs_reverse = {}
     ci_reverse = {}
-    # canonical itself included
     for k, vals in synonyms_map.items():
         cs_reverse[k] = k
         ci_reverse[k.lower()] = k
-        # Solo incluir sinónimos si no_normalize=False
         if not no_normalize:
             for v in vals:
                 cs_reverse[v] = k
@@ -274,7 +257,6 @@ def simulate_case_comparison(df: pd.DataFrame, labels_col: str, labels_list: Lis
                     canon_counts[reverse_map[key]] += 1
                     matched_any = True
                     continue
-                # fallback to direct canonical match
                 if not case_insensitive:
                     if p in labels_list:
                         canon_counts[p] += 1
@@ -298,7 +280,6 @@ def simulate_case_comparison(df: pd.DataFrame, labels_col: str, labels_list: Lis
 
     total_rows = len(df)
     
-    # Generar contenido del sanity check
     output_lines = []
     output_lines.append("\n--- Sanity check: case-sensitive vs case-insensitive mapping ---")
     output_lines.append(f"Total filas: {total_rows}")
@@ -320,11 +301,9 @@ def simulate_case_comparison(df: pd.DataFrame, labels_col: str, labels_list: Lis
 
     output_lines.append('--- End sanity check ---\n')
     
-    # Imprimir en consola
     for line in output_lines:
         print(line)
     
-    # Guardar en archivo si se proporciona output_dir
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
         result_file = Path(output_dir) / "sanity_check_results.txt"
@@ -340,17 +319,14 @@ def detect_format(df: pd.DataFrame, text_col: str = "TEXTO") -> Tuple[str, List[
     if "LABELS" in df.columns:
         return "B", ["LABELS"]
 
-    # Candidate label columns: all except text_col
     label_cols = [c for c in df.columns if c != text_col]
     if not label_cols:
         raise ValueError("No se encontraron columnas de etiquetas ni columna 'LABELS'.")
 
-    # Check if all label_cols are binary (0/1 or NaN)
     binary_ok = True
     for c in label_cols:
         vals = df[c].dropna().unique()
         allowed = set([0, 1])
-        # try to coerce
         try:
             vals_conv = set(int(x) for x in vals)
         except Exception:
@@ -369,9 +345,9 @@ def filter_labels_exclude_mama(df: pd.DataFrame, labels_col: str = "LABELS", sep
     """Filtra filas según reglas específicas para el modelo de RESTO.
     
     Solo aplica si enable=True. Las reglas son:
-    - ❌ Eliminar filas con SOLO ['Mama'] o ['Mama','Mama']
-    - ✅ Si la fila contiene ['Mama','Pulmón'], cambia a ['Pulmón']
-    - ✅ Mantiene ['Sarcoma'], ['Colon','Recto'] y otras combinaciones
+    -  Eliminar filas con SOLO ['Mama'] o ['Mama','Mama']
+    -  Si la fila contiene ['Mama','Pulmón'], cambia a ['Pulmón']
+    -  Mantiene ['Sarcoma'], ['Colon','Recto'] y otras combinaciones
     
     Args:
         df: DataFrame con la columna de etiquetas
@@ -399,7 +375,6 @@ def filter_labels_exclude_mama(df: pd.DataFrame, labels_col: str = "LABELS", sep
         
         s = str(raw).strip()
         
-        # Parse labels
         if s.startswith('[') and s.endswith(']'):
             try:
                 labels_list = ast.literal_eval(s)
@@ -412,12 +387,10 @@ def filter_labels_exclude_mama(df: pd.DataFrame, labels_col: str = "LABELS", sep
         else:
             labels_list = [p.strip() for p in s.split(sep) if p.strip()]
         
-        # Regla 1: Eliminar filas con SOLO ['Mama'] o ['Mama','Mama']
         if labels_list == ['Mama'] or labels_list == ['Mama', 'Mama']:
             rows_to_drop.append(idx)
             continue
         
-        # Regla 2: Si contiene 'Mama' junto con otros, remover 'Mama'
         if 'Mama' in labels_list and len(labels_list) > 1:
             new_labels = [l for l in labels_list if l != 'Mama']
             if new_labels:  # Si quedan etiquetas después de remover Mama
@@ -450,7 +423,6 @@ class MultilabelDataset(Dataset):
         self.sep = sep
         self.labels_col = labels_col
         self.unknown_policy = unknown_policy
-        # Respect case-sensitivity for label matching as provided by configuration
         self.labels_case_sensitive = labels_case_sensitive
 
     def __len__(self):
@@ -482,7 +454,6 @@ class MultilabelDataset(Dataset):
                 else:
                     if self.unknown_policy == 'other' and 'Otro' in label2idx:
                         vec[label2idx['Otro']] = 1.0
-                    # 'ignore' -> skip, 'error' would have been handled earlier
             return torch.tensor(vec, dtype=torch.float)
 
     def __getitem__(self, idx):
@@ -540,12 +511,9 @@ def eval_epoch(model, loader, device, threshold=0.5):
     y_prob = np.vstack(all_probs)
     y_pred = (y_prob >= threshold).astype(int)
 
-    # Metrics per label
     per_label = precision_recall_fscore_support(y_true, y_pred, average=None, zero_division=0)
-    # macro f1
     macro_f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
 
-    # AUC per label if possible
     aucs = []
     for i in range(y_true.shape[1]):
         if y_true[:, i].sum() > 0 and y_true[:, i].sum() < len(y_true):
@@ -556,7 +524,6 @@ def eval_epoch(model, loader, device, threshold=0.5):
         else:
             aucs.append(None)
     
-    # Macro-AUC
     
     valid_aucs = [a for a in aucs if a is not None]
     macro_auc = float(np.mean(valid_aucs)) if valid_aucs else 0.0
@@ -566,7 +533,7 @@ def eval_epoch(model, loader, device, threshold=0.5):
         "y_true": y_true,
         "y_prob": y_prob,
         "y_pred": y_pred,
-        "per_label": per_label,  # (precision, recall, f1, support)
+        "per_label": per_label,  
         "macro_f1": macro_f1,
         "aucs": aucs,
         "macro_auc": macro_auc
@@ -604,11 +571,9 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
     total_tp = 0
     
     for label_idx, label_name in enumerate(labels_list):
-        # Extraer etiquetas verdaderas y predichas para esta etiqueta (one-vs-rest)
         y_true_label = y_true[:, label_idx]
         y_pred_label = y_pred[:, label_idx]
         
-        # Calcular matriz de confusión
         cm = confusion_matrix(y_true_label, y_pred_label, labels=[0, 1])
         individual_cms[label_name] = cm
         
@@ -620,7 +585,6 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
         total_fn += fn
         total_tp += tp
         
-        # Guardar como imagen
         plt.figure(figsize=(6, 5))
         plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
         plt.title(f"Matriz de Confusión - {label_name}")
@@ -631,7 +595,6 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
         plt.xticks(tick_marks, ["No (0)", "Sí (1)"])
         plt.yticks(tick_marks, ["No (0)", "Sí (1)"])
         
-        # Añadir valores en celdas
         for i in range(2):
             for j in range(2):
                 plt.text(j, i, str(cm[i, j]), ha="center", va="center", color="white" if cm[i, j] > cm.max() / 2 else "black")
@@ -641,12 +604,10 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
         plt.savefig(img_path, dpi=100, bbox_inches='tight')
         plt.close()
         
-        # Agregar a texto
         cm_text += f"{label_idx}. {label_name}:\n"
         cm_text += f"  Matriz:\n    {cm[0, 0]:5d} {cm[0, 1]:5d}\n    {cm[1, 0]:5d} {cm[1, 1]:5d}\n"
         cm_text += f"  TN={cm[0, 0]}, FP={cm[0, 1]}, FN={cm[1, 0]}, TP={cm[1, 1]}\n\n"
     
-    # Crear matriz de confusión global (agregada)
     global_cm = np.array([[total_tn, total_fp], [total_fn, total_tp]])
     
     cm_text += "\n" + "="*70 + "\n"
@@ -656,7 +617,6 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
     cm_text += f"Verdadero No: {total_tn:7d}  {total_fp:7d}  (TN={total_tn}, FP={total_fp})\n"
     cm_text += f"Verdadero Sí: {total_fn:7d}  {total_tp:7d}  (FN={total_fn}, TP={total_tp})\n\n"
     
-    # Métricas globales
     global_accuracy = (total_tp + total_tn) / (total_tp + total_tn + total_fp + total_fn) if (total_tp + total_tn + total_fp + total_fn) > 0 else 0
     global_precision = total_tp / (total_tp + total_fp) if (total_tp + total_fp) > 0 else 0
     global_recall = total_tp / (total_tp + total_fn) if (total_tp + total_fn) > 0 else 0
@@ -667,7 +627,6 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
     cm_text += f"Recall Global: {global_recall:.4f}\n"
     cm_text += f"F1-Score Global: {global_f1:.4f}\n"
     
-    # Guardar matriz global como imagen
     plt.figure(figsize=(7, 6))
     plt.imshow(global_cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title("Matriz de Confusión Global Agregada (Todas las Etiquetas)")
@@ -678,7 +637,6 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
     plt.xticks(tick_marks, ["No (0)", "Sí (1)"])
     plt.yticks(tick_marks, ["No (0)", "Sí (1)"])
     
-    # Añadir valores en celdas
     for i in range(2):
         for j in range(2):
             plt.text(j, i, str(global_cm[i, j]), ha="center", va="center", 
@@ -689,29 +647,22 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
     plt.savefig(global_img_path, dpi=100, bbox_inches='tight')
     plt.close()
     
-    # NUEVA: Matriz de confusión multilabel (etiquetas reales vs predichas)
-    # Filas = etiquetas reales, Columnas = etiquetas predichas
     multilabel_cm = np.zeros((len(labels_list), len(labels_list)), dtype=int)
     
-    # Para cada muestra, registrar las confusiones
     for sample_idx in range(len(y_true)):
         true_labels = np.where(y_true[sample_idx] == 1)[0]  # índices de etiquetas verdaderas
         pred_labels = np.where(y_pred[sample_idx] == 1)[0]  # índices de etiquetas predichas
         
-        # Si no hay etiquetas verdaderas, saltar
         if len(true_labels) == 0:
             continue
         
-        # Por cada etiqueta verdadera, contar qué se predijo
         for true_idx in true_labels:
             if len(pred_labels) == 0:
-                # Si debería haber una predicción pero no hay ninguna, contar como error
                 multilabel_cm[true_idx, true_idx] -= 1  # Marcar como error (negativo para destacar)
             else:
                 for pred_idx in pred_labels:
                     multilabel_cm[true_idx, pred_idx] += 1
     
-    # Guardar matriz multilabel como imagen heatmap
     fig, ax = plt.subplots(figsize=(14, 12))
     im = ax.imshow(multilabel_cm, interpolation='nearest', cmap=plt.cm.YlOrRd)
     plt.colorbar(im, ax=ax, label="Frecuencia")
@@ -724,7 +675,6 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
     ax.set_xlabel("Etiquetas Predichas")
     ax.set_title("Matriz de Confusión Multilabel\n(Filas=Reales, Columnas=Predichas)")
     
-    # Añadir valores en celdas (solo si son > 0 para no saturar)
     for i in range(len(labels_list)):
         for j in range(len(labels_list)):
             if multilabel_cm[i, j] > 0:
@@ -736,12 +686,10 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
     plt.savefig(multilabel_img_path, dpi=100, bbox_inches='tight')
     plt.close()
     
-    # Guardar matriz multilabel como CSV para análisis detallado
     multilabel_df = pd.DataFrame(multilabel_cm, index=labels_list, columns=labels_list)
     multilabel_csv_path = cm_dir / "cm_multilabel_etiquetas.csv"
     multilabel_df.to_csv(multilabel_csv_path, encoding='utf-8')
     
-    # Agregar a texto
     cm_text += "\n" + "="*70 + "\n"
     cm_text += "=== MATRIZ DE CONFUSIÓN MULTILABEL (ETIQUETAS REALES vs PREDICHAS) ===\n"
     cm_text += "(Filas=Etiquetas Reales, Columnas=Etiquetas Predichas)\n"
@@ -751,7 +699,6 @@ def save_confusion_matrices(y_true, y_pred, labels_list, out_dir: Path):
     cm_text += "- Si Mama (fila) y Colon (columna) = 15, significa que 15 muestras \n"
     cm_text += "  tenían Mama como etiqueta real pero el modelo también predijo Colon.\n"
     
-    # Guardar archivo de texto
     cm_text_path = out_dir / "confusion_matrices.txt"
     cm_text_path.write_text(cm_text, encoding='utf-8')
     logging.info("✓ Matrices de confusión guardadas en: %s/", cm_dir)
@@ -782,14 +729,12 @@ def load_yaml_config(path: str) -> dict:
 
 
 def main():
-    # Pre-parse --config if provided to load defaults from YAML
     cfg_parser = argparse.ArgumentParser(add_help=False)
     cfg_parser.add_argument("--config", type=str, default=None, help="Archivo YAML con config (valores por defecto)")
     cfg_parser.add_argument("--output-dir", type=str, default=None, help="Directorio de salida (para setup logging)")
     cfg_known, _ = cfg_parser.parse_known_args()
 
     config = {}
-    # Si se especificó --config en línea, cargarlo. Si no, comprobar un config por defecto en script/
     if cfg_known.config:
         config = load_yaml_config(cfg_known.config)
     else:
@@ -797,7 +742,6 @@ def main():
         if default_cfg.exists():
             config = load_yaml_config(str(default_cfg))
     
-    # Determinar output_dir temprano para setup logging
     output_dir = cfg_known.output_dir if cfg_known.output_dir else config.get("output_dir", "output/multilabel_run")
     setup_logging(output_dir)
     
@@ -805,7 +749,6 @@ def main():
     logging.info("Iniciando entrenamiento multilabel")
     logging.info("="*70)
 
-    # Build main parser using config defaults where present (CLI overrides YAML)
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default=cfg_known.config, help="Archivo YAML con config (valores por defecto)")
     parser.add_argument("--csv", type=str, default=config.get("csv", "output/comparacionModelos/datos/train_set_completo.csv"))
@@ -829,7 +772,6 @@ def main():
     parser.add_argument("--seed", type=int, default=config.get("seed", 42))
     parser.add_argument("--min-support", type=int, default=config.get("min_support", 1), help="Eliminar etiquetas con soporte menor que este umbral")
     parser.add_argument("--unknown-policy", type=str, choices=["ignore", "other", "error"], default=config.get("unknown_policy", "other"), help="Qué hacer con etiquetas no listadas en --labels-file: ignore=omitir, other=mapear a 'Otro', error=lanzar excepción")
-    # Controlar si el matching de etiquetas es case-sensitive. Por defecto true porque 'colecciones_2.txt' está normalizado.
     parser.add_argument("--labels-case-sensitive", dest='labels_case_sensitive', action='store_true', help='Activar matching case-sensitive para etiquetas (default: True)')
     parser.add_argument("--no-labels-case-sensitive", dest='labels_case_sensitive', action='store_false', help='Desactivar matching case-sensitive (usa matching case-insensitive)')
     parser.set_defaults(labels_case_sensitive=config.get('labels_case_sensitive', True))
@@ -849,7 +791,6 @@ def main():
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    # Device
     if args.device:
         device = torch.device(args.device)
     else:
@@ -858,13 +799,10 @@ def main():
     print(f"Device: {device}")
 
     df = pd.read_csv(csv_path, sep=args.sep, encoding='utf-8')
-    # Normalize column names strip
     df.columns = [c.strip() for c in df.columns]
 
-    # Aplicar filtrado de Mama si está habilitado
     df = filter_labels_exclude_mama(df, labels_col=args.labels_col, sep=args.sep, enable=args.filter_exclude_mama)
 
-    # Determine format (support labels column detection)
     if args.format == "auto":
         if args.labels_col in df.columns:
             fmt = "B"
@@ -880,10 +818,8 @@ def main():
 
     print(f"Formato detectado: {fmt}")
 
-    # Globals used to expose mappings to Dataset and other helpers
     global label2idx, reverse_syn_map
 
-    # Load canonical labels and synonyms if provided
     labels_list = None
     synonyms_map = {}
     reverse_syn_map = {}
@@ -891,10 +827,8 @@ def main():
     labels_file_path = Path(args.labels_file)
     if labels_file_path.exists():
         labels_list, synonyms_map = parse_collections_file(str(labels_file_path))
-        # build reverse map (token -> canonical label) respecting case_sensitivity
         case_sensitive = args.labels_case_sensitive
         for canon, syns in synonyms_map.items():
-            # include the canonical name itself
             key = canon if case_sensitive else canon.lower()
             reverse_syn_map[key] = canon
             for s in syns:
@@ -904,25 +838,19 @@ def main():
         print(f"⚠️ Labels file {labels_file_path} no encontrado. Se derivarán etiquetas del CSV.")
 
     if labels_list is not None:
-        # Use canonical labels from file
         labels_list = list(labels_list)
-        # Optionally ensure 'Otro' exists if unknown-policy == other
         if args.unknown_policy == 'other' and 'Otro' not in labels_list:
             labels_list.append('Otro')
     else:
-        # No labels file: derive from data
         if fmt == 'B':
             labels_list = build_labels_from_B(df, labels_col=args.labels_col, sep=args.sep)
         else:
             labels_list = sorted(label_cols)
 
-    # Make reverse map available even if not present (empty)
     if 'reverse_syn_map' not in globals():
         reverse_syn_map = globals().get('reverse_syn_map', {})
 
-    # If user asked for a sanity check, run a non-destructive comparison and exit
     if args.sanity_check:
-        # Ensure we have synonyms_map (it may be empty if not provided)
         sim_syn_map = synonyms_map if synonyms_map else {}
         print("Running sanity check (non-destructive)...")
         if args.no_normalize:
@@ -930,7 +858,6 @@ def main():
         simulate_case_comparison(df, args.labels_col, labels_list, sim_syn_map, sep=args.sep, top_n=30, output_dir=args.output_dir, no_normalize=args.no_normalize)
         return
 
-    # Compute support counts (map tokens to canonical using reverse_syn_map if available)
     support_counts = {l: 0 for l in labels_list}
     if fmt == 'B':
         for raw in df[args.labels_col].dropna():
@@ -952,12 +879,10 @@ def main():
                         parts_norm.add('Otro')
                     elif args.unknown_policy == 'error':
                         raise ValueError(f"Etiqueta desconocida encontrada en datos y policy=error: {p}")
-                    # ignore -> skip
             for c in parts_norm:
                 if c in support_counts:
                     support_counts[c] += 1
 
-    # Apply min_support filtering
     if args.min_support > 1:
         kept = [l for l in labels_list if support_counts.get(l, 0) >= args.min_support]
         removed = [l for l in labels_list if l not in kept]
@@ -965,7 +890,6 @@ def main():
             print(f"Etiquetas removidas por min_support ({args.min_support}): {removed}")
         labels_list = kept
 
-    # Final label2idx
     label2idx = {l: i for i, l in enumerate(labels_list)}
 
     if not labels_list:
@@ -974,7 +898,6 @@ def main():
     print(f"Etiquetas ({len(labels_list)}): {labels_list}")
     save_label_map(labels_list, Path(args.output_dir))
 
-    # Save synonyms_map for reference
     if synonyms_map:
         with open(Path(args.output_dir) / 'synonyms_map.json', 'w', encoding='utf-8') as f:
             json.dump(synonyms_map, f, ensure_ascii=False, indent=2)
@@ -982,7 +905,6 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model_base)
 
     if args.predict:
-        # Modo predicción: cargar modelo desde output_dir/best_model
         model_dir = Path(args.output_dir) / "best_model"
         if not model_dir.exists():
             raise ValueError(f"No se encontró modelo en {model_dir}. Entrena primero o indica modelo.")
@@ -1011,7 +933,6 @@ def main():
         print("Predicciones guardadas en:", Path(args.output_dir) / "predictions.csv")
         return
 
-    # Split train/val (o cargar val desde archivo si se proporcionó)
     if args.val_csv:
         val_csv_path = Path(args.val_csv)
         if not val_csv_path.exists():
@@ -1033,7 +954,6 @@ def main():
     model = AutoModelForSequenceClassification.from_pretrained(args.model_base, num_labels=len(labels_list)).to(device)
 
     optimizer = optim.AdamW(model.parameters(), lr=args.lr,weight_decay=args.weight_decay)
-    # Use BCEWithLogitsLoss which expects raw logits
     criterion = nn.BCEWithLogitsLoss()
 
     best_auc = -1.0
@@ -1052,7 +972,6 @@ def main():
         metrics = eval_epoch(model, val_loader, device, threshold=args.threshold)
         logging.info("  Val macro-F1: %.4f", metrics['macro_f1'])
 
-        # Save per-epoch metrics
         epoch_metrics = {
             "epoch": epoch,
             "train_loss": train_loss,
@@ -1068,14 +987,12 @@ def main():
         with open(Path(args.output_dir) / f"epoch_{epoch}_metrics.json", "w", encoding="utf-8") as f:
             json.dump(epoch_metrics, f, ensure_ascii=False, indent=2)
 
-        # Checkpoint
         if metrics['macro_auc'] > best_auc:
             best_auc = metrics['macro_auc']
-            logging.info("  ✅ Nueva mejor macro-AUC: %.4f — guardando modelo...", best_auc)
+            logging.info("  Nueva mejor macro-AUC: %.4f — guardando modelo...", best_auc)
             model.save_pretrained(Path(args.output_dir) / "best_model")
             tokenizer.save_pretrained(Path(args.output_dir) / "best_model")
         
-        # Early stopping check
         if early_stop:
             should_stop = early_stop.step(metrics['macro_auc'])
             if should_stop:
@@ -1086,7 +1003,6 @@ def main():
     logging.info("Entrenamiento finalizado. Mejor macro-AUC: %.4f", best_auc)
     logging.info("Modelo y tokenizer guardados en: %s", Path(args.output_dir) / "best_model")
     
-    # Evaluar en test si se proporciona test_csv
     if args.test_csv:
         test_csv_path = Path(args.test_csv)
         if test_csv_path.exists():
@@ -1099,7 +1015,6 @@ def main():
             
             test_metrics = eval_epoch(model, test_loader, device, threshold=args.threshold)
             
-            # Recalcular predicciones para obtener y_true e y_pred (necesario para matrices de confusión)
             model.eval()
             all_test_labels = []
             all_test_probs = []
@@ -1120,10 +1035,8 @@ def main():
             y_test_prob = np.vstack(all_test_probs)
             y_test_pred = (y_test_prob >= args.threshold).astype(int)
             
-            # Guardar matrices de confusión
             save_confusion_matrices(y_test_true, y_test_pred, labels_list, Path(args.output_dir) / "test_results")
             
-            # Guardar métricas de test en archivo de texto
             test_metrics_txt = f"""=== Métricas de Test ===
 
 Macro-F1: {test_metrics['macro_f1']:.4f}

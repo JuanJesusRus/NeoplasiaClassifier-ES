@@ -2,17 +2,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-# Ruta al CSV combinado que ya generaste
 ruta_csv = r"C:\Users\jesus\OneDrive - Universidad de Málaga\Cuarto\TFG\NeoplasiaClassifier-ES\output\comparacionModelos\comparacionTestCompletos\metricas_por_combinacion_TODOS_LOS_MODELOS.csv"
 
-# Carpeta de salida para guardar los gráficos
 salida_dir = os.path.join(os.path.dirname(ruta_csv), "graficas_f1_recall")
 os.makedirs(salida_dir, exist_ok=True)
 
-# Leer CSV
 df = pd.read_csv(ruta_csv)
 
-# Iterar sobre combinaciones únicas
 combinaciones = df["Combinación"].unique()
 
 for combinacion in combinaciones:
@@ -30,7 +26,6 @@ for combinacion in combinaciones:
     bars1 = ax.bar([i - width/2 for i in x], f1, width, label='F1', color='tab:blue')
     bars2 = ax.bar([i + width/2 for i in x], recall, width, label='Recall', color='tab:orange')
 
-    # Etiquetas de soporte
     for i, s in enumerate(soporte):
         ax.text(i, max(f1[i], recall[i]) + 0.02, f"Soporte: {s}", ha='center', va='bottom', fontsize=9)
 
@@ -43,7 +38,6 @@ for combinacion in combinaciones:
     ax.legend()
     ax.grid(True, linestyle="--", alpha=0.5)
 
-    # Guardar imagen
     nombre_archivo = combinacion.replace(",", "_").replace(" ", "_").replace("/", "_") + ".png"
     plt.tight_layout()
     plt.savefig(os.path.join(salida_dir, nombre_archivo), dpi=300)
